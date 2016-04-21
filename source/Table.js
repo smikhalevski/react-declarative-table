@@ -196,6 +196,7 @@ export class Table extends Component {
         } else {
           // Table contains only fluid columns, so omit excessive calc.
           style.width = ratio * 100 + '%';
+          style.minWidth = 0;
         }
       } else {
         // Header contains only columns with fixed width.
@@ -245,6 +246,7 @@ export class Table extends Component {
             // Colgroup is fluid and has fluid columns.
             let ratio = width / totalFluid;
             headStyle.width = bodyStyle.width = `calc(${ratio * 100}% - ${totalFixed * ratio}px)`;
+            headStyle.maxWidth = bodyStyle.maxWidth = 'none';
           } else {
             // Colgroup is fluid but has no fluid columns.
             headStyle.width = bodyStyle.width = `calc(100% - ${totalFixed - width}px)`;
@@ -256,6 +258,7 @@ export class Table extends Component {
           // Colgroup has fixed widths and cannot be shrinked, so it constraints
           // minimum width of the whole table.
           headStyle.width = bodyStyle.width = width + 'px';
+          headStyle.maxWidth = bodyStyle.maxWidth = 'none';
           colgroupsFixed += width;
       }
     }
@@ -296,6 +299,7 @@ export class Table extends Component {
             style.minWidth = fluid[i] + 'px';
           } else {
             style.width = fixed[i] + 'px';
+            style.minWidth = 0;
           }
         }
         let tr = findDOMNode(rowComponent);
