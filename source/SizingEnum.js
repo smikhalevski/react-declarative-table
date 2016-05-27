@@ -1,3 +1,7 @@
+import React from 'react';
+
+const {oneOf} = React.PropTypes;
+
 /**
  * @typedef {"fluid"|"fixed"}
  * @name TableSizing
@@ -23,4 +27,4 @@ export const Sizing = {
 
 Sizing.values = [Sizing.FIXED, Sizing.FLUID];
 
-Object.freeze(Sizing);
+export const sizing = oneOf(Sizing.values);

@@ -3,7 +3,7 @@ import isString from 'lodash/isString';
 import uniqueId from 'lodash/uniqueId';
 import compact from 'lodash/compact';
 import invariant from 'invariant';
-import {Sizing} from './SizingEnum';
+import {Sizing} from './../source/SizingEnum';
 
 /**
  * Identifier of default colgroup.

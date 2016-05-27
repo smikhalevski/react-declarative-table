@@ -17,11 +17,17 @@
   ],
   "keywords": [
     "react",
-    "scroll",
+    "table",
     "component",
-    "scrollbox",
-    "textarea",
-    "scrollbar",
+    "colgroups",
+    "scrollable",
+    "nested",
+    "headers",
+    "sortable",
+    "sort",
+    "filterable",
+    "filter",
+    "lookup",
     "panel"
   ],
   "scripts": {

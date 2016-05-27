@@ -5,7 +5,7 @@ var HtmlWebpackPlugin = require('html-webpack-plugin'),
 
 module.exports = {
   entry: {
-    index: './src/demo/index.js'
+    index: './page/index.js'
   },
   output: {
     path: './target/demo',
@@ -13,7 +13,7 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: './src/demo/index.html',
+      template: './page/index.html',
       minify: {collapseWhitespace: true}
     }),
     new ExtractTextPlugin('[name].css')

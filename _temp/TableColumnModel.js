@@ -3,7 +3,7 @@ import {isState, freeze} from '../../Runtime';
 import isString from 'lodash/isString';
 import uniqueId from 'lodash/uniqueId';
 import invariant from 'invariant';
-import {Sizing} from './SizingEnum';
+import {Sizing} from './../source/SizingEnum';
 import {DEFAULT_COLGROUP_ID} from './TableColgroupModel';
 import {reduceSetOfRenderers} from '../renderer/RendererModel';
 
