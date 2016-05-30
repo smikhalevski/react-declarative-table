@@ -9,7 +9,7 @@ class App extends React.Component {
   render() {
     return (
       <div className="container">
-        <table style={{width: '100%'}}>
+        {/*<table style={{width: '100%'}}>
           <colgroup>
             <col style={{width: '50px'}}/>
             <col style={{width: 'calc(100% - 100px)'}}/>
@@ -36,7 +36,7 @@ class App extends React.Component {
             <td>c</td>
           </tr>
           </tbody>
-        </table>
+        </table>*/}
 
 
 
@@ -45,8 +45,10 @@ class App extends React.Component {
             caption: 'AAA',
             headers: [
               {
+                caption: 'BBB',
                 column: {
                   key: 'bbb',
+                  width: 100,
                   targetColgroupId: 'default'
                 }
               },
@@ -57,6 +59,8 @@ class App extends React.Component {
                     caption: 'DDD',
                     column: {
                       key: 'ddd',
+                      width: 100,
+                      sizing: 'fluid',
                       targetColgroupId: 'default'
                     }
                   },
@@ -64,6 +68,7 @@ class App extends React.Component {
                     caption: 'FFF',
                     column: {
                       key: 'fff',
+                      width: 100,
                       targetColgroupId: 'default'
                     }
                   }
@@ -75,13 +80,60 @@ class App extends React.Component {
             caption: 'EEE',
             column: {
               key: 'eee',
+              width: 50,
               targetColgroupId: 'default'
             }
           }
-        ]}} dataSet={{count: 0, offset: 0, result: []}}/>
+        ]}} dataSet={{count: 0, offset: 0, result: [
+
+          {bbb:1, ccc:2, ddd:3, fff:4, eee:5},
+          {bbb:6, ccc:7, ddd:8, fff:9, eee:10}
+
+        ]}}/>
       </div>
     );
   }
 }
 
 ReactDOM.render(<App/>, document.getElementById('app'));
+
+/*
+* <Table structure={{colgroups: [{id: 'default'}], headers: [
+ {
+ caption: 'AAA',
+ headers: [
+ {
+ column: {
+ key: 'bbb',
+ targetColgroupId: 'default'
+ }
+ },
+ {
+ caption: 'CCC',
+ headers: [
+ {
+ caption: 'DDD',
+ column: {
+ key: 'ddd',
+ targetColgroupId: 'default'
+ }
+ },
+ {
+ caption: 'FFF',
+ column: {
+ key: 'fff',
+ targetColgroupId: 'default'
+ }
+ }
+ ]
+ }
+ ]
+ },
+ {
+ caption: 'EEE',
+ column: {
+ key: 'eee',
+ targetColgroupId: 'default'
+ }
+ }
+ ]}} dataSet={{count: 0, offset: 0, result: []}}/>*/
