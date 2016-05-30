@@ -86,15 +86,23 @@ export function toStacks(header) {
  */
 export function toStacksByColgroup(structure) {
   let groups = [],
+      undefinedGroup = [],
       stacks = Array.prototype.concat(...structure.headers.map(toStacks));
   for (let colgroup of structure.colgroups) {
     let group = [];
     for (let stack of stacks) {
-      if (colgroup.id === stack[stack.length - 1].column.targetColgroupId) {
+      let {targetColgroupId} = stack[stack.length - 1].column;
+      if (targetColgroupId == null) {
+        undefinedGroup.push(stack);
+      }
+      if (colgroup.id === targetColgroupId) {
         group.push(stack);
       }
     }
     groups.push(group);
+  }
+  if (undefinedGroup.length) {
+    groups.push(undefinedGroup);
   }
   return groups;
 }

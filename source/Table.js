@@ -1,4 +1,5 @@
 import React from 'react';
+import {GenericScrollBox} from 'react-scroll-box';
 import {Sizing, TableStructureShape, DataSetShape, toStacksByColgroup} from './TableShape';
 
 export class Table extends React.Component {
@@ -68,7 +69,6 @@ export class Table extends React.Component {
         style.minWidth = fluid[i] + 'px';
       } else {
         style.width = fixed[i] + 'px';
-        style.minWidth = 0;
       }
       cols.push(<col key={i} style={style}/>);
     }
@@ -91,6 +91,68 @@ export class Table extends React.Component {
     return table;
   }
 
+  _computeColgroupWidths(colgroups, colgroupStacks) {
+    let fixed = [],
+        fluid = [],
+        totalFluid = 0, // Total fluid width of given colgroups.
+        totalFixed = 0, // Total fixed width of given colgroups.
+        colgroupsFixed = 0; // Sum of widths of fixed (non-shrinkable) colgroups.
+
+    for (let i = 0; i < colgroups.length; ++i) {
+      let {headers, sizing} = colgroups[i];
+
+
+      [fluid[i], fixed[i]] = this._reflowHeaderWidths(headers);
+
+
+      switch (sizing) {
+
+        case Sizing.FLUID:
+          if (fluid[i]) {
+            totalFluid += fixed[i] + fluid[i];
+          } else {
+            totalFixed += fixed[i];
+          }
+          continue;
+
+        case Sizing.FIXED:
+          totalFixed += fixed[i] + fluid[i];
+          continue;
+
+        default:
+          throw new Error(`Expected colgroup sizing to be ${Sizing.FLUID} or ${Sizing.FIXED}`);
+      }
+    }
+    for (let i = 0; i < colgroups.length; ++i) {
+      let {style: headStyle} = colgroups[i].headElement,
+        {style: bodyStyle} = findDOMNode(colgroups[i].bodyComponent),
+        width = fixed[i] + fluid[i];
+      switch (colgroups[i].sizing) {
+
+        case Sizing.FLUID:
+          if (fluid[i]) {
+            // Colgroup is fluid and has fluid columns.
+            let ratio = width / totalFluid;
+            headStyle.width = bodyStyle.width = `calc(${ratio * 100}% - ${totalFixed * ratio}px)`;
+            headStyle.maxWidth = bodyStyle.maxWidth = 'none';
+          } else {
+            // Colgroup is fluid but has no fluid columns.
+            headStyle.width = bodyStyle.width = `calc(100% - ${totalFixed - width}px)`;
+            headStyle.maxWidth = bodyStyle.maxWidth = width + 'px';
+          }
+          continue;
+
+        case Sizing.FIXED:
+          // Colgroup has fixed widths and cannot be shrinked, so it constraints
+          // minimum width of the whole table.
+          headStyle.width = bodyStyle.width = width + 'px';
+          headStyle.maxWidth = bodyStyle.maxWidth = 'none';
+          colgroupsFixed += width;
+      }
+    }
+    return colgroupsFixed;
+  }
+
   render() {
     const {style, className, structure, dataSet} = this.props;
     let classNames = ['data-table'];
@@ -98,33 +160,43 @@ export class Table extends React.Component {
       classNames = classNames.concat(className);
     }
 
-    let colgroupStacks = toStacksByColgroup(structure),
-        thead = this._renderThead(colgroupStacks[0]),
-        tbody = this._renderTbody(colgroupStacks[0], dataSet),
-        colgroup = <colgroup>{this._renderCols(colgroupStacks[0])}</colgroup>;
+    let colgroupStacks = toStacksByColgroup(structure);
 
     return (
       <div style={style}
            className={classNames.join(' ')}>
-        <div className="data-table__thead">
-          <table style={{width: '100%'}}>
-            {colgroup}
-            <thead>
-              {thead.map((tr, i) => <tr key={i}>{tr}</tr>)}
-            </thead>
-            <tbody>
-              {tbody.map((td, i) => <tr key={i}>{td}</tr>)}
-            </tbody>
-          </table>
-        </div>
-        <div className="data-table__tbody">
-          <table style={{width: '100%'}}>
-            {colgroup}
-            <tbody>
-              {tbody.map((td, i) => <tr key={i}>{td}</tr>)}
-            </tbody>
-          </table>
-        </div>
+        {colgroupStacks.map(stacks => {
+
+          let thead = this._renderThead(stacks),
+              tbody = this._renderTbody(stacks, dataSet),
+              colgroup = <colgroup>{this._renderCols(stacks)}</colgroup>;
+
+          return (
+            <div className="data-table__colgroup" style={{width: '100%'}}>
+              <div className="data-table__thead">
+                <table>
+                  {colgroup}
+                  <thead>
+                  {thead.map((tr, i) => <tr key={i}>{tr}</tr>)}
+                  </thead>
+                  <tbody>
+                  {tbody.map((td, i) => <tr key={i}>{td}</tr>)}
+                  </tbody>
+                </table>
+              </div>
+              <GenericScrollBox className="data-table__tbody scroll-box--wrapped">
+                <div className="scroll-box__viewport">
+                  <table>
+                    {colgroup}
+                    <tbody>
+                    {tbody.map((td, i) => <tr key={i}>{td}</tr>)}
+                    </tbody>
+                  </table>
+                </div>
+              </GenericScrollBox>
+            </div>
+          );
+        })}
       </div>
     );
   }
