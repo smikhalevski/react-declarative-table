@@ -79,43 +79,55 @@ export class Table extends React.Component {
     this._renderState = renderState;
 
     return (
-      <div style={{minWidth: renderState.tableMinWidth, ...style}}
-           className={classNames.join(' ')}>
-        {renderState.colgroupRenderDescriptors.map((desc, i) => {
-          let thead = this._renderThead(desc.colgroupStacks),
-              tbody = this._renderTbody(desc.colgroupStacks, dataSet),
-              colgroup = this._renderCols(desc.colConstraints),
-              minWidth = desc.fluidTotal + desc.fixedTotal;
-          return (
-            <div key={i} className="data-table__colgroup" style={desc.colgroupConstraints}>
-              <div ref={ref => desc.thead = ref}
-                   className="data-table__thead">
-                <table style={{minWidth}}>
+      <table style={{minWidth: renderState.tableMinWidth, ...style}}
+             className={classNames.join(' ')}>
+        <colgroup>{renderState.colgroupRenderDescriptors.map((desc, i) => <col key={i} style={desc.colgroupConstraints}/>)}</colgroup>
+        <thead>
+        <tr>
+          {renderState.colgroupRenderDescriptors.map((desc, i) => {
+            let thead = this._renderThead(desc.colgroupStacks),
+                colgroup = this._renderCols(desc.colConstraints),
+                minWidth = desc.fluidTotal + desc.fixedTotal;
+            return (
+              <th key={i} ref={ref => desc.thead = ref}>
+                <table style={{minWidth, height: '100%'}}>
                   {colgroup}
-                  <thead>
-                  {thead.map((tr, i) => <tr key={i}>{tr}</tr>)}
-                  </thead>
                   <tbody>
-                  {tbody.map((td, i) => <tr key={i}>{td}</tr>)}
+                  {thead.map((tr, i) => <tr key={i}>{tr}</tr>)}
                   </tbody>
                 </table>
-              </div>
-              <GenericScrollBox ref={ref => desc.scrollBox = ref}
-                                onViewportScroll={this.onViewportScroll}
-                                className="data-table__tbody scroll-box--wrapped">
-                <div className="scroll-box__viewport">
-                  <table style={{minWidth}}>
-                    {colgroup}
-                    <tbody>
-                    {tbody.map((td, i) => <tr key={i}>{td}</tr>)}
-                    </tbody>
-                  </table>
-                </div>
-              </GenericScrollBox>
-            </div>
-          );
-        })}
-      </div>
+              </th>
+            );
+          })}
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+          {renderState.colgroupRenderDescriptors.map((desc, i) => {
+            let tbody = this._renderTbody(desc.colgroupStacks, dataSet),
+                colgroup = this._renderCols(desc.colConstraints),
+                minWidth = desc.fluidTotal + desc.fixedTotal;
+            return (
+              <td key={i}>
+                <GenericScrollBox ref={ref => desc.scrollBox = ref}
+                                  onViewportScroll={this.onViewportScroll}
+                                  className="data-table__tbody scroll-box--wrapped">
+                  <div className="scroll-box__viewport">
+                    <table style={{minWidth}}>
+                      {colgroup}
+                      <tbody>
+                      {tbody.map((td, i) => <tr key={i}>{td}</tr>)}
+                      </tbody>
+                    </table>
+                  </div>
+                </GenericScrollBox>
+              </td>
+            );
+          })}
+        </tr>
+        </tbody>
+      </table>
+
     );
   }
 }

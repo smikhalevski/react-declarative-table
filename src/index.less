@@ -3,23 +3,20 @@
 @data-table: data-table;
 
 .@{data-table} {
+  width: 100%;
+  table-layout: fixed;
+  height: 0;
 
-  &__colgroup {
-    display: inline-block;
-    vertical-align: top;
+  table {
+    table-layout: fixed;
+    width: 100%;
   }
-  &__thead {
+
+  td, th {
     overflow: hidden;
-
-    > table {
-      width: 100%;
-    }
   }
-  &__tbody {
-    min-height: 200px;
 
-    > .@{scroll-box}__viewport > table {
-      width: 100%;
-    }
+  &__tbody {
+    height: 200px;
   }
 }

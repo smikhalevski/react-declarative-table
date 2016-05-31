@@ -47,7 +47,7 @@ class App extends React.Component {
             caption: 'EEE',
             column: {
               key: 'eee',
-              width: 50
+              width: 10
             }
           }
         ]}} dataSet={{count: 0, offset: 0, result: [
