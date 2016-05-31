@@ -42,11 +42,11 @@ export function toRenderState(structure) {
         fluidTotal = 0,
         fixed = [], // Fixed widths of columns in this colgroup.
         fixedTotal = 0;  // Total fixed width of colgroup.
-    for (let i = 0; i < stacks.length; ++i) {
-      let stack = stacks[i];
+
+    for (let stack of stacks) {
       const {targetColgroupId = 'default', width = 80, hidden, sizing} = stack[stack.length - 1].column;
       if (colgroup.id === targetColgroupId) {
-        colgroupStacks.push(stack);
+        let i = colgroupStacks.push(stack) - 1;
         fixed[i] = 0;
         fluid[i] = 0;
         if (hidden) {
@@ -61,14 +61,14 @@ export function toRenderState(structure) {
         }
       }
     }
-    for (let i = 0; i < stacks.length; ++i) {
+    for (let j = 0; j < colgroupStacks.length; ++j) {
       let constraints = {};
-      if (fluid[i]) {
-        let ratio = fluid[i] / fluidTotal;
+      if (fluid[j]) {
+        let ratio = fluid[j] / fluidTotal;
         constraints.width = `calc(${ratio * 100}% - ${parseInt(fixedTotal * ratio)}px)`;
-        constraints.minWidth = fluid[i] + 'px';
+        constraints.minWidth = fluid[j] + 'px';
       } else {
-        constraints.width = fixed[i] + 'px';
+        constraints.width = fixed[j] + 'px';
       }
       colConstraints.push(constraints);
     }

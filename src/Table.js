@@ -10,6 +10,8 @@ export class Table extends React.Component {
     dataSet: DataSetShape.isRequired
   };
 
+  _renderState;
+
   _renderThead(colgroupStacks, table = [], depth = 0) {
     if (table.length <= depth) {
       table[depth] = [];
@@ -35,7 +37,7 @@ export class Table extends React.Component {
         for (let stack of colgroupStacks) {
           totalDepth = Math.max(totalDepth, stack.length);
         }
-        table[depth].push(<th key={table[depth].length} rowSpan={totalDepth - depth}>{header.caption}</th>);
+        table[depth].push(<th key={table[depth].length} rowSpan={totalDepth - depth} style={{height: '100%'}}>{header.caption}</th>);
       }
     }
     return table;
@@ -61,7 +63,7 @@ export class Table extends React.Component {
       if (desc.scrollBox == targetScrollBox) {
         desc.thead.scrollLeft = targetScrollBox.scrollX;
       } else {
-        desc.thead.scrollTo(undefined, targetScrollBox.scrollY, 0, undefined, true);
+        desc.scrollBox.scrollTo(undefined, targetScrollBox.scrollY, 0, undefined, true);
       }
     }
   };
