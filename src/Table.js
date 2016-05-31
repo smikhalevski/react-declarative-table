@@ -1,4 +1,5 @@
 import React from 'react';
+import {findDOMNode} from 'react-dom';
 import {GenericScrollBox} from 'react-scroll-box';
 import {Sizing, TableStructureShape, DataSetShape} from './TableShape';
 import {toRenderState} from './TableModel';
@@ -68,6 +69,11 @@ export class Table extends React.Component {
     }
   };
 
+  componentDidMount() {
+    let desc = this._renderState.colgroupRenderDescriptors[0];
+    findDOMNode(this).style.height = desc.thead.offsetHeight + desc.tbody.offsetHeight + 'px';
+  }
+
   render() {
     const {style, className, structure, dataSet} = this.props;
     let classNames = ['data-table'];
@@ -89,8 +95,10 @@ export class Table extends React.Component {
                 colgroup = this._renderCols(desc.colConstraints),
                 minWidth = desc.fluidTotal + desc.fixedTotal;
             return (
-              <th key={i} ref={ref => desc.thead = ref}>
-                <table style={{minWidth, height: '100%'}}>
+              <th key={i}
+                  ref={ref => desc.thead = ref}
+                  className="data-table__thead">
+                <table className="data-table__table" style={{minWidth}}>
                   {colgroup}
                   <tbody>
                   {thead.map((tr, i) => <tr key={i}>{tr}</tr>)}
@@ -108,12 +116,13 @@ export class Table extends React.Component {
                 colgroup = this._renderCols(desc.colConstraints),
                 minWidth = desc.fluidTotal + desc.fixedTotal;
             return (
-              <td key={i}>
+              <td key={i} className="data-table__tbody">
                 <GenericScrollBox ref={ref => desc.scrollBox = ref}
                                   onViewportScroll={this.onViewportScroll}
-                                  className="data-table__tbody scroll-box--wrapped">
+                                  className="data-table__scroll-box scroll-box--wrapped"
+                                  outset={true}>
                   <div className="scroll-box__viewport">
-                    <table style={{minWidth}}>
+                    <table className="data-table__table" style={{minWidth}} ref={ref => desc.tbody = ref}>
                       {colgroup}
                       <tbody>
                       {tbody.map((td, i) => <tr key={i}>{td}</tr>)}
@@ -127,7 +136,6 @@ export class Table extends React.Component {
         </tr>
         </tbody>
       </table>
-
     );
   }
 }

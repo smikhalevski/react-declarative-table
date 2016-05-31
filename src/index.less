@@ -3,20 +3,40 @@
 @data-table: data-table;
 
 .@{data-table} {
-  width: 100%;
-  table-layout: fixed;
   height: 0;
 
-  table {
+  &,
+  &__table {
     table-layout: fixed;
     width: 100%;
+
+    > thead,
+    > tbody {
+      > tr {
+        > th {
+          overflow: hidden;
+          vertical-align: top;
+        }
+      }
+    }
   }
 
-  td, th {
+  &__table {
+    th, td {
+      border-collapse: collapse;
+      border: red 1px solid;
+      overflow: hidden;
+    }
+  }
+
+  &__thead {
     overflow: hidden;
-  }
 
-  &__tbody {
-    height: 200px;
+    > .@{data-table}__table {
+      height: 100%;
+    }
+  }
+  &__scroll-box {
+    height: 100%;
   }
 }
