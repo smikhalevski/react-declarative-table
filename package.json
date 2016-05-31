@@ -10,7 +10,7 @@
   },
   "homepage": "https://github.com/smikhalevski/react-data-table",
   "main": "target/out/index.js",
-  "webpack": "source/index.js",
+  "webpack": "src/main/index.js",
   "files": [
     "src/main/",
     "target/out/",
@@ -34,7 +34,10 @@
   "scripts": {
     "package": "webpack --p",
     "package-demo": "webpack --p --config webpack.demo.config.js",
-    "start": "webpack-dev-server --progress --d --config webpack.demo.config.js --content-base target/demo/ --host 0.0.0.0 --port 8080"
+    "start": "webpack-dev-server --progress --d --config webpack.demo.config.js --content-base target/demo/ --host 0.0.0.0 --port 8080",
+
+    "pretest": "webpack --d --config webpack.test.config.js",
+    "test": "jasmine-node --matchall --test-dir target/test/"
   },
   "devDependencies": {
     "webpack": "1.12.9",
@@ -54,6 +57,10 @@
     "less": "2.6.1",
     "classnames": "",
     "classlist-polyfill": "",
+    "jasmine": "",
+    "jasmine-node": "1.14.5",
+    "glob": "",
+
     "react-scroll-box": ""
   },
   "dependencies": {

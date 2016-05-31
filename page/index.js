@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {Table} from '../source/Table';
+import {Table} from '../src/Table';
 
 import './index.less';
 
@@ -40,7 +40,7 @@ class App extends React.Component {
 
 
 
-        <Table structure={{colgroups: [{id: 'default'}], headers: [
+        <Table structure={{headers: [
           {
             caption: 'AAA',
             headers: [
@@ -48,8 +48,7 @@ class App extends React.Component {
                 caption: 'BBB',
                 column: {
                   key: 'bbb',
-                  width: 100,
-                  targetColgroupId: 'default'
+                  width: 100
                 }
               },
               {
@@ -60,16 +59,14 @@ class App extends React.Component {
                     column: {
                       key: 'ddd',
                       width: 100,
-                      sizing: 'fluid',
-                      targetColgroupId: 'default'
+                      sizing: 'fluid'
                     }
                   },
                   {
                     caption: 'FFF',
                     column: {
                       key: 'fff',
-                      width: 100,
-                      targetColgroupId: 'default'
+                      width: 100
                     }
                   }
                 ]
@@ -80,8 +77,7 @@ class App extends React.Component {
             caption: 'EEE',
             column: {
               key: 'eee',
-              width: 50,
-              targetColgroupId: 'default'
+              width: 50
             }
           }
         ]}} dataSet={{count: 0, offset: 0, result: [
