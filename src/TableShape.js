@@ -1,17 +1,7 @@
 import React from 'react';
+import {Sizing} from './SizingEnum';
 
 const {shape, arrayOf, oneOf, string, bool, number, object} = React.PropTypes;
-
-/**
- * @typedef {"fluid"|"fixed"}
- * Type of sizing of table colgroup or column.
- */
-export const Sizing = {
-  FLUID: 'fluid',
-  FIXED: 'fixed'
-};
-
-Sizing.values = [Sizing.FIXED, Sizing.FLUID];
 
 // Sizing validator
 const sizing = oneOf(Sizing.values);
