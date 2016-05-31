@@ -70,8 +70,9 @@ export class Table extends React.Component {
   };
 
   componentDidMount() {
-    let desc = this._renderState.colgroupRenderDescriptors[0];
-    findDOMNode(this).style.height = desc.thead.offsetHeight + desc.tbody.offsetHeight + 'px';
+    for (let desc of this._renderState.colgroupRenderDescriptors) {
+      findDOMNode(desc.scrollBox).style.height = desc.tbody.offsetHeight + 'px';
+    }
   }
 
   render() {

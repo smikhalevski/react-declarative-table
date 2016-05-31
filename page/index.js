@@ -9,7 +9,7 @@ class App extends React.Component {
   render() {
     return (
       <div>
-        <Table structure={{colgroups: [{id:'default', sizing: 'fluid'}, {id:'fixed'}], headers: [
+        <Table style={{maxHeight: '200px'}} structure={{colgroups: [{id:'default', sizing: 'fluid'}, {id:'fixed'}], headers: [
           {
             caption: 'AAA',
             headers: [
@@ -53,6 +53,24 @@ class App extends React.Component {
         ]}} dataSet={{count: 0, offset: 0, result: [
 
           {bbb:1, ccc:2, ddd:3, fff:4, eee:5},
+          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
+          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
+          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
+          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
+          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
+          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
+          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
+          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
+          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
+          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
+          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
+          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
+          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
+          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
+          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
+          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
+          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
+          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
           {bbb:6, ccc:7, ddd:8, fff:9, eee:10}
 
         ]}}/>
