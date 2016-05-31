@@ -56,6 +56,16 @@ export class Table extends React.Component {
     return <colgroup>{colConstraints.map((c, i) => <col key={i} style={c}/>)}</colgroup>;
   }
 
+  onViewportScroll = targetScrollBox => {
+    for (let desc of this._renderState.colgroupRenderDescriptors) {
+      if (desc.scrollBox == targetScrollBox) {
+        desc.thead.scrollLeft = targetScrollBox.scrollX;
+      } else {
+        desc.thead.scrollTo(undefined, targetScrollBox.scrollY, 0, undefined, true);
+      }
+    }
+  };
+
   render() {
     const {style, className, structure, dataSet} = this.props;
     let classNames = ['data-table'];
@@ -63,6 +73,9 @@ export class Table extends React.Component {
       classNames = classNames.concat(className);
     }
     let renderState = toRenderState(structure);
+
+    this._renderState = renderState;
+
     return (
       <div style={{minWidth: renderState.tableMinWidth, ...style}}
            className={classNames.join(' ')}>
@@ -73,7 +86,8 @@ export class Table extends React.Component {
               minWidth = desc.fluidTotal + desc.fixedTotal;
           return (
             <div key={i} className="data-table__colgroup" style={desc.colgroupConstraints}>
-              <div className="data-table__thead">
+              <div ref={ref => desc.thead = ref}
+                   className="data-table__thead">
                 <table style={{minWidth}}>
                   {colgroup}
                   <thead>
@@ -84,7 +98,9 @@ export class Table extends React.Component {
                   </tbody>
                 </table>
               </div>
-              <GenericScrollBox className="data-table__tbody scroll-box--wrapped">
+              <GenericScrollBox ref={ref => desc.scrollBox = ref}
+                                onViewportScroll={this.onViewportScroll}
+                                className="data-table__tbody scroll-box--wrapped">
                 <div className="scroll-box__viewport">
                   <table style={{minWidth}}>
                     {colgroup}
