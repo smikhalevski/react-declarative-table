@@ -2,7 +2,7 @@ import {toStacks} from './TableModel';
 
 describe('toStacks(header)', () => {
 
-  it('ignores non-object header definitions', () => {
+  it('ignores undefined header definitions', () => {
     expect(toStacks(null)).toEqual([]);
 
     let a1, a3, a = {

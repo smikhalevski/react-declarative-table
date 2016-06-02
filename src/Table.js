@@ -1,14 +1,21 @@
 import React from 'react';
 import {findDOMNode} from 'react-dom';
-import {GenericScrollBox} from 'react-scroll-box';
+import {GenericScrollBox, ScrollAxes} from 'react-scroll-box';
 import {Sizing, TableStructureShape, DataSetShape} from './TableShape';
 import {toRenderState} from './TableModel';
+
+const {bool} = React.PropTypes;
 
 export class Table extends React.Component {
 
   static propTypes = {
     structure: TableStructureShape.isRequired,
-    dataSet: DataSetShape.isRequired
+    dataSet: DataSetShape.isRequired,
+    disabled: bool
+  };
+
+  static defaultProps = {
+    disabled: false
   };
 
   _renderState;
@@ -61,17 +68,17 @@ export class Table extends React.Component {
 
   onViewportScroll = targetScrollBox => {
     for (let desc of this._renderState.colgroupRenderDescriptors) {
-      if (desc.scrollBox == targetScrollBox) {
+      if (desc.scrollBoxRef == targetScrollBox) {
         desc.thead.scrollLeft = targetScrollBox.scrollX;
       } else {
-        desc.scrollBox.scrollTo(undefined, targetScrollBox.scrollY, 0, undefined, true);
+        desc.scrollBoxRef.scrollTo(undefined, targetScrollBox.scrollY, 0, undefined, true);
       }
     }
   };
 
   componentDidMount() {
     for (let desc of this._renderState.colgroupRenderDescriptors) {
-      findDOMNode(desc.scrollBox).style.height = desc.tbody.offsetHeight + 'px';
+      findDOMNode(desc.scrollBoxRef).style.height = desc.tbody.offsetHeight + 'px';
     }
   }
 
@@ -118,10 +125,12 @@ export class Table extends React.Component {
                 minWidth = desc.fluidTotal + desc.fixedTotal;
             return (
               <td key={i} className="data-table__tbody">
-                <GenericScrollBox ref={ref => desc.scrollBox = ref}
+                <GenericScrollBox {...desc.scrollBox}
+                                  ref={ref => desc.scrollBoxRef = ref}
                                   onViewportScroll={this.onViewportScroll}
-                                  className="data-table__scroll-box scroll-box--wrapped"
-                                  outset={true}>
+                                  axes={ScrollAxes.XY}
+                                  disabled={this.props.disabled}
+                                  className="data-table__scroll-box scroll-box--wrapped">
                   <div className="scroll-box__viewport">
                     <table className="data-table__table" style={{minWidth}} ref={ref => desc.tbody = ref}>
                       {colgroup}

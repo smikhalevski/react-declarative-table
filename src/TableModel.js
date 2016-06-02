@@ -37,7 +37,6 @@ export function toRenderState(structure) {
       stacks = Array.prototype.concat(...headers.map(toStacks));
   for (let colgroup of colgroups) {
     let colgroupStacks = [],
-        colConstraints = [],
         fluid = [],
         fluidTotal = 0,
         fixed = [], // Fixed widths of columns in this colgroup.
@@ -61,18 +60,28 @@ export function toRenderState(structure) {
         }
       }
     }
-    for (let j = 0; j < colgroupStacks.length; ++j) {
-      let constraints = {};
-      if (fluid[j]) {
-        let ratio = fluid[j] / fluidTotal;
-        constraints.width = `calc(${ratio * 100}% - ${parseInt(fixedTotal * ratio)}px)`;
-        constraints.minWidth = fluid[j] + 'px';
-      } else {
-        constraints.width = fixed[j] + 'px';
+    if (colgroupStacks.length) {
+      let colConstraints = [];
+      for (let j = 0; j < colgroupStacks.length; ++j) {
+        let constraints = {};
+        if (fluid[j]) {
+          let ratio = fluid[j] / fluidTotal;
+          constraints.width = `calc(${ratio * 100}% - ${Math.round(fixedTotal * ratio)}px)`;
+          constraints.minWidth = fluid[j] + 'px';
+        } else {
+          constraints.width = fixed[j] + 'px';
+        }
+        colConstraints.push(constraints);
       }
-      colConstraints.push(constraints);
+      colgroupRenderDescriptors.push({
+        colgroupStacks,
+        colConstraints,
+        fluidTotal,
+        fixedTotal,
+        sizing: colgroup.sizing,
+        scrollBox: colgroup.scrollBox
+      });
     }
-    colgroupRenderDescriptors.push({colgroupStacks, colConstraints, fluidTotal, fixedTotal, sizing: colgroup.sizing});
   }
 
   let tableFluidTotal = 0, // Total fluid width of given colgroups.
@@ -100,7 +109,7 @@ export function toRenderState(structure) {
       if (fluidTotal) {
         // Colgroup is fluid and has fluid columns.
         let ratio = width / tableFluidTotal;
-        constraints.width = `calc(${ratio * 100}% - ${parseInt(tableFixedTotal * ratio)}px)`;
+        constraints.width = `calc(${ratio * 100}% - ${Math.round(tableFixedTotal * ratio)}px)`;
       } else {
         // Colgroup is fluid but has no fluid columns.
         constraints.width = `calc(100% - ${tableFixedTotal - width}px)`;
