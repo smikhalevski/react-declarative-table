@@ -76,11 +76,11 @@ export class Table extends React.Component {
     }
   };
 
-  componentDidMount() {
-    for (let desc of this._renderState.colgroupRenderDescriptors) {
-      findDOMNode(desc.scrollBoxRef).style.height = desc.tbody.offsetHeight + 'px';
-    }
-  }
+  //componentDidMount() {
+  //  for (let desc of this._renderState.colgroupRenderDescriptors) {
+  //    findDOMNode(desc.scrollBoxRef).style.height = desc.tbody.offsetHeight + 'px';
+  //  }
+  //}
 
   render() {
     const {style, className, structure, dataSet} = this.props;
@@ -93,59 +93,54 @@ export class Table extends React.Component {
     this._renderState = renderState;
 
     return (
-      <table style={{minWidth: renderState.tableMinWidth, ...style}}
-             className={classNames.join(' ')}>
-        <colgroup>{renderState.colgroupRenderDescriptors.map((desc, i) => <col key={i} style={desc.colgroupConstraints}/>)}</colgroup>
-        <thead>
-        <tr>
+      <div className="data-table" style={{height: "700px"}}>
+        <div className="data-table__thead">
           {renderState.colgroupRenderDescriptors.map((desc, i) => {
             let thead = this._renderThead(desc.colgroupStacks),
                 colgroup = this._renderCols(desc.colConstraints),
                 minWidth = desc.fluidTotal + desc.fixedTotal;
             return (
-              <th key={i}
-                  ref={ref => desc.thead = ref}
-                  className="data-table__thead">
-                <table className="data-table__table" style={{minWidth}}>
+              <div key={i}
+                   ref={ref => desc.thead = ref}
+                   style={desc.colgroupConstraints}
+                   className="data-table__colgroup">
+                <table style={{minWidth}}>
                   {colgroup}
                   <tbody>
                   {thead.map((tr, i) => <tr key={i}>{tr}</tr>)}
                   </tbody>
                 </table>
-              </th>
+              </div>
             );
           })}
-        </tr>
-        </thead>
-        <tbody>
-        <tr>
+        </div>
+        <div className="data-table__tbody">
           {renderState.colgroupRenderDescriptors.map((desc, i) => {
             let tbody = this._renderTbody(desc.colgroupStacks, dataSet),
                 colgroup = this._renderCols(desc.colConstraints),
                 minWidth = desc.fluidTotal + desc.fixedTotal;
             return (
-              <td key={i} className="data-table__tbody">
-                <GenericScrollBox {...desc.scrollBox}
-                                  ref={ref => desc.scrollBoxRef = ref}
-                                  onViewportScroll={this.onViewportScroll}
-                                  axes={ScrollAxes.XY}
-                                  disabled={this.props.disabled}
-                                  className="data-table__scroll-box scroll-box--wrapped">
-                  <div className="scroll-box__viewport">
-                    <table className="data-table__table" style={{minWidth}} ref={ref => desc.tbody = ref}>
-                      {colgroup}
-                      <tbody>
-                      {tbody.map((td, i) => <tr key={i}>{td}</tr>)}
-                      </tbody>
-                    </table>
-                  </div>
-                </GenericScrollBox>
-              </td>
+              <GenericScrollBox {...desc.scrollBox}
+                                key={i}
+                                ref={ref => desc.scrollBoxRef = ref}
+                                onViewportScroll={this.onViewportScroll}
+                                axes={ScrollAxes.XY}
+                                disabled={this.props.disabled}
+                                style={desc.colgroupConstraints}
+                                className="data-table__colgroup scroll-box--wrapped">
+                <div className="scroll-box__viewport">
+                  <table style={{minWidth}} ref={ref => desc.tbody = ref}>
+                    {colgroup}
+                    <tbody>
+                    {tbody.map((td, i) => <tr key={i}>{td}</tr>)}
+                    </tbody>
+                  </table>
+                </div>
+              </GenericScrollBox>
             );
           })}
-        </tr>
-        </tbody>
-      </table>
+        </div>
+      </div>
     );
   }
 }
