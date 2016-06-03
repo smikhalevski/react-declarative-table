@@ -5,6 +5,11 @@ import {Table} from '../src/Table';
 
 import './index.less';
 
+let result = [];
+for (let i = 0; i < 100; ++i) {
+  result.push({index: i, bbb:1, ccc:2, ddd:3, fff:4, eee:5});
+}
+
 class App extends React.Component {
 
   render() {
@@ -31,7 +36,7 @@ class App extends React.Component {
                 {
                   caption: 'BBB',
                   column: {
-                    key: 'bbb',
+                    key: 'index',
                     width: 100,
                     targetColgroupId: 'frozen'
                   }
@@ -65,30 +70,7 @@ class App extends React.Component {
                 width: 10
               }
             }
-          ]}} dataSet={{offset: 10, count: 100, result: [
-
-          {bbb:1, ccc:2, ddd:3, fff:4, eee:5},
-          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
-          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
-          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
-          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
-          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
-          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
-          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
-          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
-          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
-          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
-          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
-          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
-          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
-          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
-          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
-          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
-          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
-          {bbb:6, ccc:7, ddd:8, fff:9, eee:10},
-          {bbb:6, ccc:7, ddd:8, fff:9, eee:10}
-
-        ]}}/>
+          ]}} dataSet={{offset: 0, count: result.length, result}}/>
       </div>
     );
   }

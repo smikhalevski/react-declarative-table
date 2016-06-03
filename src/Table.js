@@ -6,6 +6,15 @@ import {toRenderState, normalizeDataSet} from './TableModel';
 
 const {bool, number} = React.PropTypes;
 
+// Number of rows to render off-screen to make scroll re-rendering fully invisible.
+const OFFSCREEN_ROW_COUNT = 8;
+
+// OFFSCREEN_ROW_COUNT / 2 above viewport and OFFSCREEN_ROW_COUNT / 2 below viewport
+const REPAINT_ZONE_ROW_COUNT = 2;
+
+// Number of rows requested from server.
+const BUFFER_SIZE = 1000;
+
 export class Table extends React.Component {
 
   static propTypes = {
@@ -23,8 +32,20 @@ export class Table extends React.Component {
     estimatedRowHeight: 24
   };
 
+  _checkEnoughRowsTimeout;
   _renderState; // Rendering model.
   _normalizedDataSet;
+  _effectiveOffset;
+
+  // Offset of topmost record that component intends to render. This record may not be yet available on in data set.
+  _requestedOffset = 0;
+
+  // Number of records that are intended to be rendered. These records may not be available in data set.
+  _requestedRowCount = 0;
+
+  // Rows that are actually rendered in table. They are always empty on initial render to speed up showing table
+  // structure to user.
+  _renderedRows;
 
   _renderThead(colgroupStacks, table = [], depth = 0) {
     if (table.length <= depth) {
@@ -57,12 +78,12 @@ export class Table extends React.Component {
     return table;
   }
 
-  _renderTbody(colgroupStacks, dataSet) {
+  _renderTbody(colgroupStacks, rows) {
     let table = [];
-    for (let i = 0; i < dataSet.result.length; ++i) {
+    for (let i = 0; i < rows.length; ++i) {
       table[i] = [];
       for (let j = 0; j < colgroupStacks.length; ++j) {
-        table[i].push(<td key={j}>{dataSet.result[i][colgroupStacks[j][colgroupStacks[j].length - 1].column.key]}</td>);
+        table[i].push(<td key={j}>{rows[i][colgroupStacks[j][colgroupStacks[j].length - 1].column.key]}</td>);
       }
     }
     return table;
@@ -72,8 +93,76 @@ export class Table extends React.Component {
     return <colgroup>{colConstraints.map((c, i) => <col key={i} style={c}/>)}</colgroup>;
   }
 
+  _checkEnoughRows() {
+    const {estimatedRowHeight} = this.props;
+    let scrollBox = this._renderState.colgroupRenderDescriptors[0].scrollBoxRef;
+
+    // Offset of viewport in rows.
+    const viewportOffset = Math.floor(scrollBox.scrollY / estimatedRowHeight);
+
+    // Number of rows that are visible on screen.
+    const viewportRowCount = Math.ceil(findDOMNode(scrollBox).clientHeight / estimatedRowHeight);
+
+    const {_requestedOffset: offset, _requestedRowCount: rowCount} = this;
+
+    const dataSet = this._normalizedDataSet,
+          totalRowCount = dataSet.count,
+          effectiveOffset = this._effectiveOffset;
+
+    const isDangerAbove = offset > 0 && offset + REPAINT_ZONE_ROW_COUNT >= viewportOffset,
+          isDangerBelow = offset + rowCount < totalRowCount && Math.max(0, offset + rowCount - REPAINT_ZONE_ROW_COUNT) <= viewportOffset + viewportRowCount,
+          isRowsDisappeared = offset + rowCount > totalRowCount;
+
+    if (isDangerAbove || isDangerBelow || isRowsDisappeared) {
+      // Render of additional rows required because user has reached danger zones while scrolling.
+
+      let offset = Math.min(dataSet.count - viewportRowCount, viewportOffset) - OFFSCREEN_ROW_COUNT / 2;
+      this._requestedOffset = Math.max(0, Math.floor(offset));
+      this._requestedRowCount = Math.min(viewportRowCount + OFFSCREEN_ROW_COUNT + Math.min(0, offset), totalRowCount - this._requestedOffset);
+
+      // Request new data set range is required rendering range is out of its bounds.
+      const isInsufficientAbove = this._requestedOffset < effectiveOffset,
+            isInsufficientBelow = this._requestedOffset + this._requestedRowCount > effectiveOffset + dataSet.result.length;
+
+      if (isInsufficientAbove || isInsufficientBelow) {
+        let bufferOffset = Math.round(this._requestedOffset - (BUFFER_SIZE - this._requestedRowCount) / 2);
+
+        console.log(
+
+          Math.max(0, bufferOffset), BUFFER_SIZE + Math.min(0, bufferOffset)
+
+        );
+        //this.props.dispatch(dataSetPageRequest(dataSet.id, Math.max(0, bufferOffset), BUFFER_SIZE + Math.min(0, bufferOffset)));
+
+
+        this.setState({});
+
+      } else {
+        // Just request component repaint.
+        this.setState({});
+      }
+    }
+
+
+  }
+
+  componentDidMount () {
+    let scheduledCheckEnoughRows = () => {
+      this._checkEnoughRows();
+      this._checkEnoughRowsTimeout = setTimeout(scheduledCheckEnoughRows, 200);
+    };
+    scheduledCheckEnoughRows();
+  }
+
+  componentWillUnmount() {
+    clearTimeout(this._checkEnoughRowsTimeout);
+  }
+
   onViewportScroll = targetScrollBox => {
     for (let desc of this._renderState.colgroupRenderDescriptors) {
+      if (!desc.scrollBoxRef) {
+        continue;
+      }
       if (desc.scrollBoxRef == targetScrollBox) {
         if (desc.thead) {
           desc.thead.scrollLeft = targetScrollBox.scrollX;
@@ -101,16 +190,23 @@ export class Table extends React.Component {
 
     this._renderState = renderState;
     this._normalizedDataSet = normalizedDataSet;
+    this._effectiveOffset = Math.min(normalizedDataSet.offset, normalizedDataSet.count - this._requestedRowCount);
 
-    let topMargin = normalizedDataSet.offset * estimatedRowHeight;
-    let bottomMargin = (normalizedDataSet.count - normalizedDataSet.offset - normalizedDataSet.result.length) * estimatedRowHeight;
+    // Create an array of rows that should be rendered on viewport. This array can contain less rows than
+    // `_requestedRowCount`, because some of them (leading or trailing) may not be available in data set.
+    let skipOffset = Math.max(0, this._requestedOffset - this._effectiveOffset);
+    this._renderedRows = normalizedDataSet.result.slice(skipOffset, skipOffset + this._requestedRowCount);
+
+    let topOffset = this._effectiveOffset + Math.max(0, this._requestedOffset - this._effectiveOffset);
+    let topMargin = topOffset * estimatedRowHeight;
+    let bottomMargin = (normalizedDataSet.count - topOffset - this._renderedRows.length) * estimatedRowHeight;
 
     if (!headless) {
       var theadGroup = (
         <div className="data-table__thead">
           {renderState.colgroupRenderDescriptors.map((desc, i) => {
             let thead = this._renderThead(desc.colgroupStacks),
-              colgroup = this._renderCols(desc.colConstraints);
+                colgroup = this._renderCols(desc.colConstraints);
             return (
               <div key={i}
                    ref={ref => desc.thead = ref}
@@ -136,7 +232,7 @@ export class Table extends React.Component {
         {theadGroup}
         <div className="data-table__tbody">
           {renderState.colgroupRenderDescriptors.map((desc, i) => {
-            let tbody = this._renderTbody(desc.colgroupStacks, dataSet),
+            let tbody = this._renderTbody(desc.colgroupStacks, this._renderedRows),
                 colgroup = this._renderCols(desc.colConstraints);
             return (
               <GenericScrollBox {...desc.scrollBox}
