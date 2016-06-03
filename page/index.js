@@ -6,7 +6,7 @@ import {Table} from '../src/Table';
 import './index.less';
 
 let result = [];
-for (let i = 0; i < 100; ++i) {
+for (let i = 0; i < 10000; ++i) {
   result.push({index: i, bbb:1, ccc:2, ddd:3, fff:4, eee:5});
 }
 

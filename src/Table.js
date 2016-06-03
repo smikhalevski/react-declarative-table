@@ -129,14 +129,14 @@ export class Table extends React.Component {
       if (isInsufficientAbove || isInsufficientBelow) {
         let bufferOffset = Math.round(this._requestedOffset - (BUFFER_SIZE - this._requestedRowCount) / 2);
         onDataSetRowsRangeRequired(Math.max(0, bufferOffset), BUFFER_SIZE + Math.min(0, bufferOffset), this.props.dataSet);
+
+        // TODO Do we need to re-render here?
         this.setState({});
       } else {
         // Just request component repaint.
         this.setState({});
       }
     }
-
-
   }
 
   componentDidMount () {
