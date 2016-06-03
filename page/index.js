@@ -10,7 +10,7 @@ class App extends React.Component {
   render() {
     return (
       <div>
-        <Table style={{height: '400px'}} className="data-table--wrapped" structure={{
+        <Table style={{height: '400px'}} structure={{
           colgroups: [
             {
               id:'default',

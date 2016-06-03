@@ -15,6 +15,7 @@ export class Table extends React.Component {
   };
 
   static defaultProps = {
+    className: 'data-table--wrapped',
     disabled: false
   };
 
