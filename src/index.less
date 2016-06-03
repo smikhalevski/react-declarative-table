@@ -1,59 +1,74 @@
 @import (once) '~react-scroll-box/src/main/index.less';
 
 @data-table: data-table;
+@data-table-border-radius: 6px;
+@data-table-border: solid 1px #959595;
 
 .@{data-table} {
   display: -ms-flexbox;
   display: flex;
   -ms-flex-direction: column;
   flex-direction: column;
+  border-radius: @data-table-border-radius;
 
+  &--wrapped {
+    > .@{data-table}__tbody > .@{data-table}__colgroup {
+      .scroll-box-wrap();
+    }
+  }
   &__thead,
   &__tbody {
     display: -ms-flexbox;
     display: flex;
     -ms-flex-direction: row;
     flex-direction: row;
+    border-radius: inherit;
   }
   &__colgroup {
     position: relative;
-    border: solid 4px blue;
+    border: @data-table-border;
+    border-radius: inherit;
 
-    > table,
-    > .@{scroll-box}__viewport > table {
-      table-layout: fixed;
-      width: 100%;
-      border-collapse: collapse;
+    &:not(:last-child) > .@{scroll-box}__track--y {
+      visibility: hidden !important;
+    }
+    + .@{data-table}__colgroup {
+      border-left: none;
+    }
+  }
+  &__table {
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: collapse;
 
-      > thead,
-      > tbody {
-        > tr {
-          > th,
-          > td {
-            overflow: hidden;
-            border: solid 4px green;
+    > thead,
+    > tbody {
+      > tr {
+        > th,
+        > td {
+          overflow: hidden;
+          border: @data-table-border;
 
-            &:first-child {
-              border-left: none;
-            }
-            &:last-child {
-              border-right: none;
-            }
-            &[rowspan] {
-              border-bottom: none;
-            }
-          }
           &:first-child {
-            > th,
-            > td {
-              border-top: none;
-            }
+            border-left: none;
           }
           &:last-child {
-            > th,
-            > td {
-              border-bottom: none;
-            }
+            border-right: none;
+          }
+          &[rowspan] {
+            border-bottom: none;
+          }
+        }
+        &:first-child {
+          > th,
+          > td {
+            border-top: none;
+          }
+        }
+        &:last-child {
+          > th,
+          > td {
+            border-bottom: none;
           }
         }
       }
@@ -62,6 +77,8 @@
   &__thead {
     -ms-flex: 0 0 auto;
     flex: 0 0 auto;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
 
     > .@{data-table}__colgroup {
       display: -ms-flex;
@@ -70,25 +87,47 @@
       -ms-flex-direction: row;
       flex-direction: row;
 
+      &:not(:first-child):not(:last-child) {
+        border-radius: 0;
+      }
       &:first-child {
-        border-top-left-radius: 6px;
+        border-top-right-radius: 0;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
       }
       &:last-child {
-        border-top-right-radius: 6px;
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
       }
     }
   }
   &__tbody {
     -ms-flex: 1 1 auto;
     flex: 1 1 auto;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
 
     > .@{data-table}__colgroup {
+      &:not(:first-child):not(:last-child) {
+        border-radius: 0;
+      }
       &:first-child {
-        border-bottom-left-radius: 6px;
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
       }
       &:last-child {
-        border-bottom-right-radius: 6px;
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+        border-bottom-left-radius: 0;
       }
     }
+  }
+}
+
+.@{data-table} {
+  &__thead {
+    background-color: #ddd;
   }
 }

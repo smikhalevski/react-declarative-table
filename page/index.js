@@ -1,3 +1,4 @@
+import 'classlist-polyfill';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import {Table} from '../src/Table';
@@ -9,7 +10,7 @@ class App extends React.Component {
   render() {
     return (
       <div>
-        <Table style={{/*maxHeight: '200px'*/}} structure={{
+        <Table style={{height: '400px'}} className="data-table--wrapped" structure={{
           colgroups: [
             {
               id:'default',
@@ -20,7 +21,7 @@ class App extends React.Component {
             },
             {
               id: 'frozen',
-              //sizing: 'fluid'
+              sizing: 'fluid'
             }
           ],
           headers: [

@@ -76,12 +76,6 @@ export class Table extends React.Component {
     }
   };
 
-  //componentDidMount() {
-  //  for (let desc of this._renderState.colgroupRenderDescriptors) {
-  //    findDOMNode(desc.scrollBoxRef).style.height = desc.tbody.offsetHeight + 'px';
-  //  }
-  //}
-
   render() {
     const {style, className, structure, dataSet} = this.props;
     let classNames = ['data-table'];
@@ -93,18 +87,19 @@ export class Table extends React.Component {
     this._renderState = renderState;
 
     return (
-      <div className="data-table" style={{height: "700px"}}>
+      <div className={classNames.join(' ')}
+           style={{minWidth: renderState.tableMinWidth, ...style}}>
         <div className="data-table__thead">
           {renderState.colgroupRenderDescriptors.map((desc, i) => {
             let thead = this._renderThead(desc.colgroupStacks),
-                colgroup = this._renderCols(desc.colConstraints),
-                minWidth = desc.fluidTotal + desc.fixedTotal;
+                colgroup = this._renderCols(desc.colConstraints);
             return (
               <div key={i}
                    ref={ref => desc.thead = ref}
                    style={desc.colgroupConstraints}
                    className="data-table__colgroup">
-                <table style={{minWidth}}>
+                <table className="data-table__table"
+                       style={{minWidth: desc.colgroupMinWidth}}>
                   {colgroup}
                   <tbody>
                   {thead.map((tr, i) => <tr key={i}>{tr}</tr>)}
@@ -117,8 +112,7 @@ export class Table extends React.Component {
         <div className="data-table__tbody">
           {renderState.colgroupRenderDescriptors.map((desc, i) => {
             let tbody = this._renderTbody(desc.colgroupStacks, dataSet),
-                colgroup = this._renderCols(desc.colConstraints),
-                minWidth = desc.fluidTotal + desc.fixedTotal;
+                colgroup = this._renderCols(desc.colConstraints);
             return (
               <GenericScrollBox {...desc.scrollBox}
                                 key={i}
@@ -127,9 +121,11 @@ export class Table extends React.Component {
                                 axes={ScrollAxes.XY}
                                 disabled={this.props.disabled}
                                 style={desc.colgroupConstraints}
-                                className="data-table__colgroup scroll-box--wrapped">
+                                className="data-table__colgroup">
                 <div className="scroll-box__viewport">
-                  <table style={{minWidth}} ref={ref => desc.tbody = ref}>
+                  <table className="data-table__table"
+                         style={{minWidth: desc.colgroupMinWidth}}
+                         ref={ref => desc.tbody = ref}>
                     {colgroup}
                     <tbody>
                     {tbody.map((td, i) => <tr key={i}>{td}</tr>)}

@@ -106,6 +106,7 @@ export function toRenderState(structure) {
         constraints = {},
         width = fixedTotal + fluidTotal;
     if (sizing == Sizing.FLUID) {
+      colgroupRenderDescriptors[i].colgroupMinWidth = width + 'px';
       if (fluidTotal) {
         // Colgroup is fluid and has fluid columns.
         let ratio = width / tableFluidTotal;
