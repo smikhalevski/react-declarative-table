@@ -4,7 +4,7 @@ import {GenericScrollBox, ScrollAxes} from 'react-scroll-box';
 import {Sizing, TableStructureShape, DataSetShape} from './TableShape';
 import {toRenderState, normalizeDataSet} from './TableModel';
 
-const {bool, number} = React.PropTypes;
+const {bool, number, func} = React.PropTypes;
 
 // Number of rows to render off-screen to make scroll re-rendering fully invisible.
 const OFFSCREEN_ROW_COUNT = 8;
@@ -17,19 +17,21 @@ const BUFFER_SIZE = 1000;
 
 export class Table extends React.Component {
 
+  static defaultProps = {
+    className: 'data-table--wrapped',
+    disabled: false,
+    headless: false,
+    estimatedRowHeight: 24,
+    onDataSetRowsRangeRequired: (requiredOffset, requiredLimit, dataSet) => {}
+  };
+
   static propTypes = {
     structure: TableStructureShape.isRequired,
     dataSet: DataSetShape.isRequired,
     disabled: bool,
     headless: bool,
-    estimatedRowHeight: number
-  };
-
-  static defaultProps = {
-    className: 'data-table--wrapped',
-    disabled: false,
-    headless: false,
-    estimatedRowHeight: 24
+    estimatedRowHeight: number,
+    onDataSetRowsRangeRequired: func
   };
 
   _checkEnoughRowsTimeout;
@@ -94,7 +96,7 @@ export class Table extends React.Component {
   }
 
   _checkEnoughRows() {
-    const {estimatedRowHeight} = this.props;
+    const {estimatedRowHeight, onDataSetRowsRangeRequired} = this.props;
     let scrollBox = this._renderState.colgroupRenderDescriptors[0].scrollBoxRef;
 
     // Offset of viewport in rows.
@@ -126,17 +128,8 @@ export class Table extends React.Component {
 
       if (isInsufficientAbove || isInsufficientBelow) {
         let bufferOffset = Math.round(this._requestedOffset - (BUFFER_SIZE - this._requestedRowCount) / 2);
-
-        console.log(
-
-          Math.max(0, bufferOffset), BUFFER_SIZE + Math.min(0, bufferOffset)
-
-        );
-        //this.props.dispatch(dataSetPageRequest(dataSet.id, Math.max(0, bufferOffset), BUFFER_SIZE + Math.min(0, bufferOffset)));
-
-
+        onDataSetRowsRangeRequired(Math.max(0, bufferOffset), BUFFER_SIZE + Math.min(0, bufferOffset), this.props.dataSet);
         this.setState({});
-
       } else {
         // Just request component repaint.
         this.setState({});
