@@ -4,7 +4,7 @@ import {GenericScrollBox, ScrollAxes} from 'react-scroll-box';
 import {Sizing, TableStructureShape, DataSetShape} from './TableShape';
 import {toRenderState, normalizeDataSet} from './TableModel';
 
-const {bool, number, func} = React.PropTypes;
+const {bool, number, func, oneOfType, string} = React.PropTypes;
 
 // Number of rows to render off-screen to make scroll re-rendering fully invisible.
 const OFFSCREEN_ROW_COUNT = 8;
@@ -22,6 +22,8 @@ export class Table extends React.Component {
     disabled: false,
     headless: false,
     estimatedRowHeight: 24,
+    cellComponent: null,
+    headerComponent: null,
     onDataSetRowsRangeRequired: (requiredOffset, requiredLimit, dataSet) => {}
   };
 
@@ -31,7 +33,9 @@ export class Table extends React.Component {
     disabled: bool,
     headless: bool,
     estimatedRowHeight: number,
-    onDataSetRowsRangeRequired: func
+    onDataSetRowsRangeRequired: func,
+    cellComponent: oneOfType([func, string]),
+    headerComponent: oneOfType([func, string])
   };
 
   _checkEnoughRowsTimeout;
@@ -48,6 +52,22 @@ export class Table extends React.Component {
   // Rows that are actually rendered in table. They are always empty on initial render to speed up showing table
   // structure to user.
   _renderedRows;
+
+  _renderHeader(header) {
+    const {headerComponent} = this.props;
+    if (headerComponent) {
+      return React.createElement(headerComponent, {header});
+    }
+    return header.caption;
+  }
+
+  _renderCell(row, column) {
+    const {cellComponent} = this.props;
+    if (cellComponent) {
+      return React.createElement(cellComponent, {row, column});
+    }
+    return row[column.key];
+  }
 
   _renderThead(colgroupStacks, table = [], depth = 0) {
     if (table.length <= depth) {
@@ -68,13 +88,13 @@ export class Table extends React.Component {
         }
         i = j - 1;
         this._renderThead(colSpan, table, depth + 1);
-        table[depth].push(<th key={table[depth].length} colSpan={colSpan.length}>{header.caption}</th>);
+        table[depth].push(<th key={table[depth].length} colSpan={colSpan.length}>{this._renderHeader(header)}</th>);
       } else {
         let totalDepth = 0;
         for (let stack of colgroupStacks) {
           totalDepth = Math.max(totalDepth, stack.length);
         }
-        table[depth].push(<th key={table[depth].length} rowSpan={totalDepth - depth} style={{height: '100%'}}>{header.caption}</th>);
+        table[depth].push(<th key={table[depth].length} rowSpan={totalDepth - depth} style={{height: '100%'}}>{this._renderHeader(header)}</th>);
       }
     }
     return table;
@@ -85,7 +105,7 @@ export class Table extends React.Component {
     for (let i = 0; i < rows.length; ++i) {
       table[i] = [];
       for (let j = 0; j < colgroupStacks.length; ++j) {
-        table[i].push(<td key={j}>{rows[i][colgroupStacks[j][colgroupStacks[j].length - 1].column.key]}</td>);
+        table[i].push(<td key={j}>{this._renderCell(rows[i], colgroupStacks[j][colgroupStacks[j].length - 1].column)}</td>);
       }
     }
     return table;
