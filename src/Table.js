@@ -11,12 +11,14 @@ export class Table extends React.Component {
   static propTypes = {
     structure: TableStructureShape.isRequired,
     dataSet: DataSetShape.isRequired,
-    disabled: bool
+    disabled: bool,
+    headless: bool
   };
 
   static defaultProps = {
     className: 'data-table--wrapped',
-    disabled: false
+    disabled: false,
+    headless: false
   };
 
   _renderState;
@@ -70,7 +72,9 @@ export class Table extends React.Component {
   onViewportScroll = targetScrollBox => {
     for (let desc of this._renderState.colgroupRenderDescriptors) {
       if (desc.scrollBoxRef == targetScrollBox) {
-        desc.thead.scrollLeft = targetScrollBox.scrollX;
+        if (desc.thead) {
+          desc.thead.scrollLeft = targetScrollBox.scrollX;
+        }
       } else {
         desc.scrollBoxRef.scrollTo(undefined, targetScrollBox.scrollY, 0, undefined, true);
       }
@@ -78,22 +82,27 @@ export class Table extends React.Component {
   };
 
   render() {
-    const {style, className, structure, dataSet} = this.props;
+    const {style, className, structure, dataSet, disabled, headless} = this.props;
     let classNames = ['data-table'];
     if (className) {
       classNames = classNames.concat(className);
+    }
+    if (disabled) {
+      classNames = classNames.concat('data-table--disabled');
+    }
+    if (headless) {
+      classNames = classNames.concat('data-table--headless');
     }
     let renderState = toRenderState(structure);
 
     this._renderState = renderState;
 
-    return (
-      <div className={classNames.join(' ')}
-           style={{minWidth: renderState.tableMinWidth, ...style}}>
+    if (!headless) {
+      var theadGroup = (
         <div className="data-table__thead">
           {renderState.colgroupRenderDescriptors.map((desc, i) => {
             let thead = this._renderThead(desc.colgroupStacks),
-                colgroup = this._renderCols(desc.colConstraints);
+              colgroup = this._renderCols(desc.colConstraints);
             return (
               <div key={i}
                    ref={ref => desc.thead = ref}
@@ -110,6 +119,13 @@ export class Table extends React.Component {
             );
           })}
         </div>
+      );
+    }
+
+    return (
+      <div className={classNames.join(' ')}
+           style={{minWidth: renderState.tableMinWidth, ...style}}>
+        {theadGroup}
         <div className="data-table__tbody">
           {renderState.colgroupRenderDescriptors.map((desc, i) => {
             let tbody = this._renderTbody(desc.colgroupStacks, dataSet),
@@ -120,7 +136,7 @@ export class Table extends React.Component {
                                 ref={ref => desc.scrollBoxRef = ref}
                                 onViewportScroll={this.onViewportScroll}
                                 axes={ScrollAxes.XY}
-                                disabled={this.props.disabled}
+                                disabled={disabled}
                                 style={desc.colgroupConstraints}
                                 className="data-table__colgroup">
                 <div className="scroll-box__viewport">
