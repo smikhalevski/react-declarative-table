@@ -65,7 +65,7 @@ class App extends React.Component {
                 width: 10
               }
             }
-          ]}} dataSet={{count: 0, offset: 0, result: [
+          ]}} dataSet={{offset: 10, count: 100, result: [
 
           {bbb:1, ccc:2, ddd:3, fff:4, eee:5},
           {bbb:6, ccc:7, ddd:8, fff:9, eee:10},

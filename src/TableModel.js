@@ -31,6 +31,10 @@ export function toStacks(header) {
   return [];
 }
 
+export function normalizeDataSet(dataSet) {
+  return {offset: 0, count: dataSet.result.length, ...dataSet};
+}
+
 export function toRenderState(structure) {
   const {colgroups = [{id: 'default', sizing: 'fluid'}], headers = []} = structure;
   let colgroupRenderDescriptors = [],

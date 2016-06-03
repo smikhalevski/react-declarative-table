@@ -2,9 +2,9 @@ import React from 'react';
 import {findDOMNode} from 'react-dom';
 import {GenericScrollBox, ScrollAxes} from 'react-scroll-box';
 import {Sizing, TableStructureShape, DataSetShape} from './TableShape';
-import {toRenderState} from './TableModel';
+import {toRenderState, normalizeDataSet} from './TableModel';
 
-const {bool} = React.PropTypes;
+const {bool, number} = React.PropTypes;
 
 export class Table extends React.Component {
 
@@ -12,16 +12,19 @@ export class Table extends React.Component {
     structure: TableStructureShape.isRequired,
     dataSet: DataSetShape.isRequired,
     disabled: bool,
-    headless: bool
+    headless: bool,
+    estimatedRowHeight: number
   };
 
   static defaultProps = {
     className: 'data-table--wrapped',
     disabled: false,
-    headless: false
+    headless: false,
+    estimatedRowHeight: 24
   };
 
-  _renderState;
+  _renderState; // Rendering model.
+  _normalizedDataSet;
 
   _renderThead(colgroupStacks, table = [], depth = 0) {
     if (table.length <= depth) {
@@ -82,7 +85,7 @@ export class Table extends React.Component {
   };
 
   render() {
-    const {style, className, structure, dataSet, disabled, headless} = this.props;
+    const {style, className, structure, dataSet, disabled, headless, estimatedRowHeight} = this.props;
     let classNames = ['data-table'];
     if (className) {
       classNames = classNames.concat(className);
@@ -94,8 +97,13 @@ export class Table extends React.Component {
       classNames = classNames.concat('data-table--headless');
     }
     let renderState = toRenderState(structure);
+    let normalizedDataSet = normalizeDataSet(dataSet);
 
     this._renderState = renderState;
+    this._normalizedDataSet = normalizedDataSet;
+
+    let topMargin = normalizedDataSet.offset * estimatedRowHeight;
+    let bottomMargin = (normalizedDataSet.count - normalizedDataSet.offset - normalizedDataSet.result.length) * estimatedRowHeight;
 
     if (!headless) {
       var theadGroup = (
@@ -141,7 +149,7 @@ export class Table extends React.Component {
                                 className="data-table__colgroup">
                 <div className="scroll-box__viewport">
                   <table className="data-table__table"
-                         style={{minWidth: desc.colgroupMinWidth}}
+                         style={{minWidth: desc.colgroupMinWidth, margin: `${topMargin}px 0 ${bottomMargin}px`}}
                          ref={ref => desc.tbody = ref}>
                     {colgroup}
                     <tbody>
