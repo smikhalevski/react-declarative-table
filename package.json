@@ -1,14 +1,14 @@
 {
-  "name": "react-data-table",
+  "name": "react-declarative-table",
   "version": "0.0.1",
   "author": "Savva Mikhalevski",
   "description": "",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/smikhalevski/react-data-table.git"
+    "url": "https://github.com/smikhalevski/react-declarative-table.git"
   },
-  "homepage": "https://github.com/smikhalevski/react-data-table",
+  "homepage": "https://github.com/smikhalevski/react-declarative-table",
   "main": "target/out/index.js",
   "webpack": "src/main/index.js",
   "files": [
