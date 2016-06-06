@@ -1,7 +1,7 @@
 import 'classlist-polyfill';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {Table} from '../src/Table';
+import {Table} from '../main/Table';
 
 import './index.less';
 
