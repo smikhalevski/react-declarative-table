@@ -1,6 +1,7 @@
 # React Declarative Table
 
 [![Build Status](https://travis-ci.org/smikhalevski/react-declarative-table.svg)](https://travis-ci.org/smikhalevski/react-declarative-table)
+[![npm](https://img.shields.io/npm/v/npm.svg)](https://www.npmjs.com/package/react-declarative-table)
 
 [**Live Demo**](http://smikhalevski.github.io/react-declarative-table/)
 
