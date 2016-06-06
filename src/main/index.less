@@ -36,39 +36,43 @@
       border-left: none;
     }
   }
-  &__table {
-    table-layout: fixed;
-    width: 100%;
-    border-collapse: collapse;
+  &__table-container {
+    min-height: 1px; // Otherwise scroll does not show up if table has no data but headers overflow table width.
 
-    > thead,
-    > tbody {
-      > tr {
-        > th,
-        > td {
-          overflow: hidden;
-          border: @data-table-border;
+    > table {
+      table-layout: fixed;
+      width: 100%;
+      border-collapse: collapse;
 
+      > thead,
+      > tbody {
+        > tr {
+          > th,
+          > td {
+            overflow: hidden;
+            border: @data-table-border;
+
+            &:first-child {
+              border-left: none;
+            }
+            &:last-child {
+              border-right: none;
+            }
+            &[rowspan] {
+              border-bottom: none;
+            }
+          }
           &:first-child {
-            border-left: none;
+            > th,
+            > td {
+              border-top: none;
+            }
           }
           &:last-child {
-            border-right: none;
-          }
-          &[rowspan] {
-            border-bottom: none;
-          }
-        }
-        &:first-child {
-          > th,
-          > td {
-            border-top: none;
-          }
-        }
-        &:last-child {
-          > th,
-          > td {
-            border-bottom: none;
+            > th,
+            > td {
+              border-bottom: none;
+            }
           }
         }
       }
@@ -101,6 +105,7 @@
   &__tbody {
     -ms-flex: 1 1 auto;
     flex: 1 1 auto;
+    min-height: 1px;
 
     > .@{data-table}__colgroup {
       &:not(:first-child):not(:last-child) {

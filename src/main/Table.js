@@ -144,7 +144,7 @@ export class Table extends React.Component {
 
       // Request new data set range is required rendering range is out of its bounds.
       const isInsufficientAbove = this._requestedOffset < effectiveOffset,
-            isInsufficientBelow = this._requestedOffset + this._requestedRowCount > effectiveOffset + dataSet.result.length;
+            isInsufficientBelow = this._requestedOffset + this._requestedRowCount > effectiveOffset + dataSet.rows.length;
 
       if (isInsufficientAbove || isInsufficientBelow) {
         let bufferOffset = Math.round(this._requestedOffset - (BUFFER_SIZE - this._requestedRowCount) / 2);
@@ -208,7 +208,7 @@ export class Table extends React.Component {
     // Create an array of rows that should be rendered on viewport. This array can contain less rows than
     // `_requestedRowCount`, because some of them (leading or trailing) may not be available in data set.
     let skipOffset = Math.max(0, this._requestedOffset - this._effectiveOffset);
-    this._renderedRows = normalizedDataSet.result.slice(skipOffset, skipOffset + this._requestedRowCount);
+    this._renderedRows = normalizedDataSet.rows.slice(skipOffset, skipOffset + this._requestedRowCount);
 
     let topOffset = this._effectiveOffset + Math.max(0, this._requestedOffset - this._effectiveOffset);
     let topMargin = topOffset * estimatedRowHeight;
@@ -225,13 +225,15 @@ export class Table extends React.Component {
                    ref={ref => desc.thead = ref}
                    style={desc.colgroupConstraints}
                    className="data-table__colgroup">
-                <table className="data-table__table"
-                       style={{minWidth: desc.colgroupMinWidth}}>
-                  {colgroup}
-                  <tbody>
-                  {thead.map((tr, i) => <tr key={i}>{tr}</tr>)}
-                  </tbody>
-                </table>
+                <div className="data-table__table-container"
+                     style={{minWidth: desc.colgroupMinWidth}}>
+                  <table>
+                    {colgroup}
+                    <tbody>
+                    {thead.map((tr, i) => <tr key={i}>{tr}</tr>)}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             );
           })}
@@ -257,14 +259,15 @@ export class Table extends React.Component {
                                 style={desc.colgroupConstraints}
                                 className="data-table__colgroup">
                 <div className="scroll-box__viewport">
-                  <table className="data-table__table"
-                         style={{minWidth: desc.colgroupMinWidth, margin: `${topMargin}px 0 ${bottomMargin}px`}}
-                         ref={ref => desc.tbody = ref}>
-                    {colgroup}
-                    <tbody>
-                    {tbody.map((td, i) => <tr key={i}>{td}</tr>)}
-                    </tbody>
-                  </table>
+                  <div className="data-table__table-container"
+                       style={{minWidth: desc.colgroupMinWidth, margin: `${topMargin}px 0 ${bottomMargin}px`}}>
+                    <table ref={ref => desc.tbody = ref}>
+                      {colgroup}
+                      <tbody>
+                      {tbody.map((td, i) => <tr key={i}>{td}</tr>)}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </GenericScrollBox>
             );

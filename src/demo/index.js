@@ -5,9 +5,9 @@ import {Table} from '../main/Table';
 
 import './index.less';
 
-let result = [];
+let rows = [];
 for (let i = 0; i < 10000; ++i) {
-  result.push({index: i, bbb: 1, ccc: 2, ddd: 3, fff: 4, eee: 5});
+  rows.push({index: i, bbb: 1, ccc: 2, ddd: 3, fff: 4, eee: 5});
 }
 
 class App extends React.Component {
@@ -73,7 +73,7 @@ class App extends React.Component {
                    }
                  ]}
                }
-               dataSet={{offset: 0, count: result.length, result}}
+               dataSet={{offset: 0, count: rows.length, rows}}
                cellComponent={function({row, column}) {return <a>{row[column.key]}</a>}}
                headerComponent={function({header}) {return <u>{header.caption}</u>}}
         />

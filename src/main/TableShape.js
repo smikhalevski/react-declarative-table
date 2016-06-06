@@ -89,12 +89,12 @@ export const DataSetShape = shape({
   count: number,
 
   /**
-   * Offset of the first record listed in `result`.
+   * Offset of the first record listed in `rows`.
    */
   offset: number,
 
   /**
    * List of objects representing table rows.
    */
-  result: arrayOf(object).isRequired
+  rows: arrayOf(object).isRequired
 });

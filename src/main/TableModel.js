@@ -32,7 +32,7 @@ export function toStacks(header) {
 }
 
 export function normalizeDataSet(dataSet) {
-  return {offset: 0, count: dataSet.result.length, ...dataSet};
+  return {offset: 0, count: dataSet.rows.length, ...dataSet};
 }
 
 export function toRenderState(structure) {
