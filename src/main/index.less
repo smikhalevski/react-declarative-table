@@ -1,15 +1,12 @@
 @import (once) '~react-scroll-box/src/main/index.less';
 
 @data-table: data-table;
-@data-table-border-radius: 6px;
-@data-table-border: solid 1px #959595;
 
 .@{data-table} {
   display: -ms-flexbox;
   display: flex;
   -ms-flex-direction: column;
   flex-direction: column;
-  border-radius: @data-table-border-radius;
 
   &--wrapped {
     > .@{data-table}__tbody > .@{data-table}__colgroup {
@@ -26,7 +23,6 @@
   }
   &__colgroup {
     position: relative;
-    border: @data-table-border;
     border-radius: inherit;
 
     &:not(:last-child) > .@{scroll-box}__track--y {
@@ -50,7 +46,6 @@
           > th,
           > td {
             overflow: hidden;
-            border: @data-table-border;
 
             &:first-child {
               border-left: none;
@@ -129,8 +124,31 @@
   }
 }
 
+@data-table-border-radius: 6px;
+@data-table-border: solid 1px #959595;
+
 .@{data-table} {
+  border-radius: @data-table-border-radius;
+
   &__thead > .@{data-table}__colgroup {
     background-color: #ddd;
+  }
+  &__th,
+  &__td,
+  &__colgroup {
+    border: @data-table-border;
+  }
+
+  .@{data-table}__tr:nth-child(even) {
+    background-color: fade(#000, 5%);
+  }
+
+  &--striped[data-parity="even"] {
+    .@{data-table}__tr:nth-child(odd) {
+      background-color: fade(#000, 5%);
+    }
+    .@{data-table}__tr:nth-child(even) {
+      background-color: transparent;
+    }
   }
 }

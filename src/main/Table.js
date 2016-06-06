@@ -88,13 +88,13 @@ export class Table extends React.Component {
         }
         i = j - 1;
         this._renderThead(colSpan, table, depth + 1);
-        table[depth].push(<th key={table[depth].length} colSpan={colSpan.length}>{this._renderHeader(header)}</th>);
+        table[depth].push(<th key={table[depth].length} className="data-table__th" colSpan={colSpan.length}>{this._renderHeader(header)}</th>);
       } else {
         let totalDepth = 0;
         for (let stack of colgroupStacks) {
           totalDepth = Math.max(totalDepth, stack.length);
         }
-        table[depth].push(<th key={table[depth].length} rowSpan={totalDepth - depth} style={{height: '100%'}}>{this._renderHeader(header)}</th>);
+        table[depth].push(<th key={table[depth].length} className="data-table__th" rowSpan={totalDepth - depth} style={{height: '100%'}}>{this._renderHeader(header)}</th>);
       }
     }
     return table;
@@ -105,7 +105,7 @@ export class Table extends React.Component {
     for (let i = 0; i < rows.length; ++i) {
       table[i] = [];
       for (let j = 0; j < colgroupStacks.length; ++j) {
-        table[i].push(<td key={j}>{this._renderCell(rows[i], colgroupStacks[j][colgroupStacks[j].length - 1].column)}</td>);
+        table[i].push(<td key={j} className="data-table__td">{this._renderCell(rows[i], colgroupStacks[j][colgroupStacks[j].length - 1].column)}</td>);
       }
     }
     return table;
@@ -241,9 +241,16 @@ export class Table extends React.Component {
       );
     }
 
+    let parity = 'odd';
+    if (this._requestedOffset % 2) {
+      parity = 'even';
+    }
+
     return (
       <div className={classNames.join(' ')}
-           style={{minWidth: renderState.tableMinWidth, ...style}}>
+           style={{minWidth: renderState.tableMinWidth, ...style}}
+           data-offset={this._requestedOffset}
+           data-parity={parity}>
         {theadGroup}
         <div className="data-table__tbody">
           {renderState.colgroupRenderDescriptors.map((desc, i) => {
@@ -264,7 +271,7 @@ export class Table extends React.Component {
                     <table ref={ref => desc.tbody = ref}>
                       {colgroup}
                       <tbody>
-                      {tbody.map((td, i) => <tr key={i}>{td}</tr>)}
+                      {tbody.map((td, i) => <tr key={i} className="data-table__tr">{td}</tr>)}
                       </tbody>
                     </table>
                   </div>
