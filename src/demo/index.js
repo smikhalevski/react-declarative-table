@@ -75,7 +75,7 @@ class App extends React.Component {
                }
                dataSet={{offset: 0, count: result.length, result}}
                cellComponent={function({row, column}) {return <a>{row[column.key]}</a>}}
-               headerComponent={function({header}) {return <s>{header.caption}</s>}}
+               headerComponent={function({header}) {return <u>{header.caption}</u>}}
         />
       </div>
     );
