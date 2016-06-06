@@ -6,15 +6,6 @@ import {toRenderState, normalizeDataSet} from './TableModel';
 
 const {bool, number, func, oneOfType, string} = React.PropTypes;
 
-// Number of rows to render off-screen to make scroll re-rendering fully invisible.
-const OFFSCREEN_ROW_COUNT = 8;
-
-// OFFSCREEN_ROW_COUNT / 2 above viewport and OFFSCREEN_ROW_COUNT / 2 below viewport
-const REPAINT_ZONE_ROW_COUNT = 2;
-
-// Number of rows requested from server.
-const BUFFER_SIZE = 1000;
-
 export class Table extends React.Component {
 
   static defaultProps = {
@@ -24,7 +15,13 @@ export class Table extends React.Component {
     estimatedRowHeight: 24,
     cellComponent: null,
     headerComponent: null,
-    onDataSetRowsRangeRequired: (requiredOffset, requiredLimit, dataSet) => {}
+    onDataSetRowsRangeRequired: (requiredOffset, requiredLimit, dataSet) => {},
+    // Number of rows to render off-screen to make scroll re-rendering fully invisible.
+    offscreenRowCount: 8,
+    // `offscreenRowCount / 2` above viewport and `offscreenRowCount / 2` below viewport
+    repaintZoneRowCount: 2,
+    // Number of rows requested from server.
+    bufferRowCount: 1000
   };
 
   static propTypes = {
@@ -34,6 +31,9 @@ export class Table extends React.Component {
     headless: bool,
     estimatedRowHeight: number,
     onDataSetRowsRangeRequired: func,
+    offscreenRowCount: number,
+    repaintZoneRowCount: number,
+    bufferRowCount: number,
     cellComponent: oneOfType([func, string]),
     headerComponent: oneOfType([func, string])
   };
@@ -116,7 +116,9 @@ export class Table extends React.Component {
   }
 
   _checkEnoughRows() {
-    const {estimatedRowHeight, onDataSetRowsRangeRequired} = this.props;
+    const {_requestedOffset, _requestedRowCount} = this;
+    const {estimatedRowHeight, onDataSetRowsRangeRequired, repaintZoneRowCount, offscreenRowCount, bufferRowCount} = this.props;
+
     let scrollBox = this._renderState.colgroupRenderDescriptors[0].scrollBoxRef;
 
     // Offset of viewport in rows.
@@ -125,33 +127,31 @@ export class Table extends React.Component {
     // Number of rows that are visible on screen.
     const viewportRowCount = Math.ceil(findDOMNode(scrollBox).clientHeight / estimatedRowHeight);
 
-    const {_requestedOffset: offset, _requestedRowCount: rowCount} = this;
-
     const dataSet = this._normalizedDataSet,
-          totalRowCount = dataSet.count,
+          availableRowCount = dataSet.count,
           effectiveOffset = this._effectiveOffset;
 
-    const isDangerAbove = offset > 0 && offset + REPAINT_ZONE_ROW_COUNT >= viewportOffset,
-          isDangerBelow = offset + rowCount < totalRowCount && Math.max(0, offset + rowCount - REPAINT_ZONE_ROW_COUNT) <= viewportOffset + viewportRowCount,
-          isRowsDisappeared = offset + rowCount > totalRowCount;
+    const isDangerAbove = _requestedOffset > 0 && _requestedOffset + repaintZoneRowCount >= viewportOffset,
+          isDangerBelow = _requestedOffset + _requestedRowCount < availableRowCount && Math.max(0, _requestedOffset + _requestedRowCount - repaintZoneRowCount) <= viewportOffset + viewportRowCount,
+          isRowsDisappeared = _requestedOffset + _requestedRowCount > availableRowCount;
 
     if (isDangerAbove || isDangerBelow || isRowsDisappeared) {
       // Render of additional rows required because user has reached danger zones while scrolling.
+      let offset = Math.min(availableRowCount - viewportRowCount, viewportOffset) - offscreenRowCount / 2;
 
-      let offset = Math.min(dataSet.count - viewportRowCount, viewportOffset) - OFFSCREEN_ROW_COUNT / 2;
       this._requestedOffset = Math.max(0, Math.floor(offset));
-      this._requestedRowCount = Math.min(viewportRowCount + OFFSCREEN_ROW_COUNT + Math.min(0, offset), totalRowCount - this._requestedOffset);
+      this._requestedRowCount = Math.min(viewportRowCount + offscreenRowCount + Math.min(0, offset), availableRowCount - this._requestedOffset);
 
       // Request new data set range is required rendering range is out of its bounds.
       const isInsufficientAbove = this._requestedOffset < effectiveOffset,
             isInsufficientBelow = this._requestedOffset + this._requestedRowCount > effectiveOffset + dataSet.rows.length;
 
       if (isInsufficientAbove || isInsufficientBelow) {
-        let bufferOffset = Math.round(this._requestedOffset - (BUFFER_SIZE - this._requestedRowCount) / 2);
-        onDataSetRowsRangeRequired(Math.max(0, bufferOffset), BUFFER_SIZE + Math.min(0, bufferOffset), this.props.dataSet);
+        let bufferOffset = Math.round(this._requestedOffset - (bufferRowCount - this._requestedRowCount) / 2);
+        onDataSetRowsRangeRequired(Math.max(0, bufferOffset), bufferRowCount + Math.min(0, bufferOffset), this.props.dataSet);
 
         // TODO Do we need to re-render here?
-        this.setState({});
+        //this.setState({});
       } else {
         // Just request component repaint.
         this.setState({});
