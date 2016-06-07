@@ -56,7 +56,7 @@ export class Table extends React.Component {
   _renderHeader(header) {
     const {headerComponent} = this.props;
     if (headerComponent) {
-      return React.createElement(headerComponent, {header});
+      return React.createElement(headerComponent, {header, table: this.props});
     }
     return header.caption;
   }
@@ -64,7 +64,7 @@ export class Table extends React.Component {
   _renderCell(row, column) {
     const {cellComponent} = this.props;
     if (cellComponent) {
-      return React.createElement(cellComponent, {row, column});
+      return React.createElement(cellComponent, {row, column, table: this.props});
     }
     return row[column.key];
   }
@@ -100,12 +100,12 @@ export class Table extends React.Component {
     return table;
   }
 
-  _renderTbody(colgroupStacks, rows) {
+  _renderTbody(colgroupStacks, rows, effectiveOffset) {
     let table = [];
     for (let i = 0; i < rows.length; ++i) {
       table[i] = [];
       for (let j = 0; j < colgroupStacks.length; ++j) {
-        table[i].push(<td key={j} className="data-table__td">{this._renderCell(rows[i], colgroupStacks[j][colgroupStacks[j].length - 1].column)}</td>);
+        table[i].push(<td key={effectiveOffset + j} className="data-table__td">{this._renderCell(rows[i], colgroupStacks[j][colgroupStacks[j].length - 1].column)}</td>);
       }
     }
     return table;
@@ -120,12 +120,15 @@ export class Table extends React.Component {
     const {estimatedRowHeight, onDataSetRowsRangeRequired, repaintZoneRowCount, offscreenRowCount, bufferRowCount} = this.props;
 
     let scrollBox = this._renderState.colgroupRenderDescriptors[0].scrollBoxRef;
+    if (!scrollBox) {
+      return;
+    }
 
     // Offset of viewport in rows.
     const viewportOffset = Math.floor(scrollBox.scrollY / estimatedRowHeight);
 
     // Number of rows that are visible on screen.
-    const viewportRowCount = Math.ceil(findDOMNode(scrollBox).clientHeight / estimatedRowHeight);
+    const viewportRowCount = Math.ceil(this._referenceScrollBoxEl.clientHeight / estimatedRowHeight);
 
     const dataSet = this._normalizedDataSet,
           availableRowCount = dataSet.count,
@@ -254,12 +257,12 @@ export class Table extends React.Component {
         {theadGroup}
         <div className="data-table__tbody">
           {renderState.colgroupRenderDescriptors.map((desc, i) => {
-            let tbody = this._renderTbody(desc.colgroupStacks, this._renderedRows),
+            let tbody = this._renderTbody(desc.colgroupStacks, this._renderedRows, this._effectiveOffset),
                 colgroup = this._renderCols(desc.colConstraints);
             return (
               <GenericScrollBox {...desc.scrollBox}
                                 key={i}
-                                ref={ref => desc.scrollBoxRef = ref}
+                                ref={ref => {desc.scrollBoxRef = ref; this._referenceScrollBoxEl = ref && findDOMNode(ref)}}
                                 onViewportScroll={this.onViewportScroll}
                                 axes={ScrollAxes.XY}
                                 disabled={disabled}
