@@ -1,8 +1,8 @@
 import {toStacks} from './TableModel';
 
-describe('toStacks(header)', () => {
+describe('TableModel::toStacks(header)', () => {
 
-  it('ignores undefined header definitions', () => {
+  it('ignores `undefined` header definitions', () => {
     expect(toStacks(null)).toEqual([]);
 
     let a1, a3, a = {

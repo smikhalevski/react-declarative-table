@@ -1,10 +1,10 @@
 import React from 'react';
 import {findDOMNode} from 'react-dom';
 import {GenericScrollBox, ScrollAxes} from 'react-scroll-box';
-import {Sizing, TableStructureShape, DataSetShape} from './TableShape';
-import {toRenderState, normalizeDataSet} from './TableModel';
+import {Sizing, TableDataSetShape, TableColGroupShape, TableRowGroupShape, TableHeaderShape} from './TableShape';
+import {toRenderState, normalizeDataSet, canonizeLayout} from './TableModel';
 
-const {bool, number, func, oneOfType, string} = React.PropTypes;
+const {bool, number, func, oneOfType, string, arrayOf} = React.PropTypes;
 
 export class Table extends React.Component {
 
@@ -25,8 +25,11 @@ export class Table extends React.Component {
   };
 
   static propTypes = {
-    structure: TableStructureShape.isRequired,
-    dataSet: DataSetShape.isRequired,
+    colGroups: arrayOf(TableColGroupShape.isRequired),
+    rowGroups: arrayOf(TableRowGroupShape.isRequired),
+    headers: arrayOf(TableHeaderShape.isRequired),
+    dataSets: arrayOf(TableDataSetShape.isRequired),
+
     disabled: bool,
     headless: bool,
     estimatedRowHeight: number,
@@ -38,7 +41,7 @@ export class Table extends React.Component {
     headerComponent: oneOfType([func, string])
   };
 
-  _checkEnoughRowsTimeout;
+  _checkEnoughRowsId;
   _renderState; // Rendering model.
   _normalizedDataSet;
   _effectiveOffset;
@@ -69,19 +72,19 @@ export class Table extends React.Component {
     return row[column.key];
   }
 
-  _renderThead(colgroupStacks, table = [], depth = 0) {
+  _renderThead(stacks, table = [], depth = 0) {
     if (table.length <= depth) {
       table[depth] = [];
     }
-    for (let i = 0; i < colgroupStacks.length; ++i) {
-      let header = colgroupStacks[i][depth];
+    for (let i = 0; i < stacks.length; ++i) {
+      let header = stacks[i][depth];
       // Last header in stack has no sub-headers by definition.
-      if (depth < colgroupStacks[i].length - 1) {
-        let colSpan = [colgroupStacks[i]];
+      if (depth < stacks[i].length - 1) {
+        let colSpan = [stacks[i]];
         // Siblings that can be joined are added to colspan.
-        for (var j = i + 1; j < colgroupStacks.length; ++j) {
-          if (depth < colgroupStacks[j].length && colgroupStacks[i][depth].caption == colgroupStacks[j][depth].caption) {
-            colSpan.push(colgroupStacks[j]);
+        for (var j = i + 1; j < stacks.length; ++j) {
+          if (depth < stacks[j].length && stacks[i][depth].caption == stacks[j][depth].caption) {
+            colSpan.push(stacks[j]);
           } else {
             break;
           }
@@ -91,7 +94,7 @@ export class Table extends React.Component {
         table[depth].push(<th key={table[depth].length} className="data-table__th" colSpan={colSpan.length}>{this._renderHeader(header)}</th>);
       } else {
         let totalDepth = 0;
-        for (let stack of colgroupStacks) {
+        for (let stack of stacks) {
           totalDepth = Math.max(totalDepth, stack.length);
         }
         table[depth].push(<th key={table[depth].length} className="data-table__th" rowSpan={totalDepth - depth} style={{height: '100%'}}>{this._renderHeader(header)}</th>);
@@ -131,7 +134,7 @@ export class Table extends React.Component {
     const viewportRowCount = Math.ceil(this._referenceScrollBoxEl.clientHeight / estimatedRowHeight);
 
     const dataSet = this._normalizedDataSet,
-          availableRowCount = dataSet.count,
+          availableRowCount = dataSet.totalCount,
           effectiveOffset = this._effectiveOffset;
 
     const isDangerAbove = _requestedOffset > 0 && _requestedOffset + repaintZoneRowCount >= viewportOffset,
@@ -163,15 +166,15 @@ export class Table extends React.Component {
   }
 
   componentDidMount () {
-    let scheduledCheckEnoughRows = () => {
-      this._checkEnoughRows();
-      this._checkEnoughRowsTimeout = setTimeout(scheduledCheckEnoughRows, 200);
-    };
-    scheduledCheckEnoughRows();
+    //let scheduledCheckEnoughRows = () => {
+    //  this._checkEnoughRows();
+    //  this._checkEnoughRowsId = setTimeout(scheduledCheckEnoughRows, 200);
+    //};
+    //scheduledCheckEnoughRows();
   }
 
   componentWillUnmount() {
-    clearTimeout(this._checkEnoughRowsTimeout);
+    clearTimeout(this._checkEnoughRowsId);
   }
 
   onViewportScroll = targetScrollBox => {
@@ -190,7 +193,7 @@ export class Table extends React.Component {
   };
 
   render() {
-    const {style, className, structure, dataSet, disabled, headless, estimatedRowHeight} = this.props;
+    const {style, className, disabled, headless, estimatedRowHeight} = this.props;
     let classNames = ['data-table'];
     if (className) {
       classNames = classNames.concat(className);
@@ -201,12 +204,13 @@ export class Table extends React.Component {
     if (headless) {
       classNames = classNames.concat('data-table--headless');
     }
-    let renderState = toRenderState(structure);
-    let normalizedDataSet = normalizeDataSet(dataSet);
 
-    this._renderState = renderState;
+    let canonicLayout = canonizeLayout(this.props);
+
+
+    return;
     this._normalizedDataSet = normalizedDataSet;
-    this._effectiveOffset = Math.min(normalizedDataSet.offset, normalizedDataSet.count - this._requestedRowCount);
+    this._effectiveOffset = Math.min(normalizedDataSet.offset, normalizedDataSet.totalCount - this._requestedRowCount);
 
     // Create an array of rows that should be rendered on viewport. This array can contain less rows than
     // `_requestedRowCount`, because some of them (leading or trailing) may not be available in data set.
@@ -215,13 +219,14 @@ export class Table extends React.Component {
 
     let topOffset = this._effectiveOffset + Math.max(0, this._requestedOffset - this._effectiveOffset);
     let topMargin = topOffset * estimatedRowHeight;
-    let bottomMargin = (normalizedDataSet.count - topOffset - this._renderedRows.length) * estimatedRowHeight;
+    let bottomMargin = (normalizedDataSet.totalCount - topOffset - this._renderedRows.length) * estimatedRowHeight;
 
     if (!headless) {
       var theadGroup = (
         <div className="data-table__thead">
           {renderState.colgroupRenderDescriptors.map((desc, i) => {
             let thead = this._renderThead(desc.colgroupStacks),
+                tbody = this._renderTbody(desc.colgroupStacks, this._renderedRows.slice(0, 4), this._effectiveOffset),
                 colgroup = this._renderCols(desc.colConstraints);
             return (
               <div key={i}
@@ -234,6 +239,10 @@ export class Table extends React.Component {
                     {colgroup}
                     <tbody>
                     {thead.map((tr, i) => <tr key={i}>{tr}</tr>)}
+                    </tbody>
+
+                    <tbody>
+                    {tbody.map((td, i) => <tr key={i} className="data-table__tr">{td}</tr>)}
                     </tbody>
                   </table>
                 </div>

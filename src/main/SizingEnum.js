@@ -8,3 +8,7 @@ export const Sizing = {
 };
 
 Sizing.values = [Sizing.FIXED, Sizing.FLUID];
+
+export function isSizing(sizing) {
+  return Sizing.values.indexOf(sizing) > -1;
+}

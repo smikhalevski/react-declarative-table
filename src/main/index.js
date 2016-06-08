@@ -1,3 +1,3 @@
 export {Table} from './Table';
 export {Sizing} from './SizingEnum';
-export * from './TableShape';
+export {TableStructureShape, TableColGroupShape, TableRowGroupShape, TableHeaderShape, TableColumnShape, TableDataSetShape} from './TableShape';

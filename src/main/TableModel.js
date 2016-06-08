@@ -1,5 +1,13 @@
 import {Sizing} from './SizingEnum';
 
+export const
+    DEFAULT_COL_GROUP_ID = 'default',
+    DEFAULT_ROW_GROUP_ID = 'default';
+
+export function flatten(array) {
+  return Array.prototype.concat.apply([], array);
+}
+
 /**
  * @typedef {Array.<TableHeaderShape>}
  * @name TableHeaderStack
@@ -10,17 +18,14 @@ import {Sizing} from './SizingEnum';
  */
 /**
  * Converts header to stack of headers.
- *
- * Does not make any additional copies of {@link TableHeaderShape} objects.
- *
  * @param {TableHeaderShape} header Header to convert to stacks.
  * @returns {Array.<TableHeaderStack>}
  */
 export function toStacks(header) {
   if (header) {
     const {headers} = header;
-    if (Array.isArray(headers) && headers.length) {
-      let stacks = Array.prototype.concat(...headers.map(toStacks));
+    if (headers && headers.length) {
+      let stacks = flatten(headers.map(toStacks));
       for (let stack of stacks) {
         stack.unshift(header);
       }
@@ -31,102 +36,110 @@ export function toStacks(header) {
   return [];
 }
 
-export function normalizeDataSet(dataSet) {
-  return {offset: 0, count: dataSet.rows.length, ...dataSet};
+export function canonizeRowGroupsLayout(rowGroups = [{id: DEFAULT_ROW_GROUP_ID}], dataSets = []) {
+  const canonicRowGroups = [];
+
+  for (const {id, sizing, height, className} of rowGroups) {
+    for (const dataSet of dataSets) {
+      const {targetRowGroupId = DEFAULT_ROW_GROUP_ID, rows = [], offset = 0, totalCount = rows.length} = dataSet;
+
+      if (id == targetRowGroupId) {
+        const style = {};
+        if (sizing == Sizing.FIXED) {
+          style.flex = '0 0 auto';
+          if (height > 0) {
+            style.height = `${height}px`;
+          }
+        } else {
+          if (height > 0) {
+            style.flex = `${height} 1 auto`;
+            style.minHeight = `${height}px`;
+          } else {
+            style.flex = '1 1 auto';
+          }
+        }
+        // Original data set is also stored here to provide it to `onDataSetRowsRangeRequired` as is.
+        canonicRowGroups.push({dataSet, style, className, offset, totalCount, rows});
+        break;
+      }
+    }
+  }
+  return canonicRowGroups;
 }
 
-export function toRenderState(structure) {
-  const {colgroups = [{id: 'default', sizing: 'fluid'}], headers = []} = structure;
-  let colgroupRenderDescriptors = [],
-      stacks = Array.prototype.concat(...headers.map(toStacks));
-  for (let colgroup of colgroups) {
-    let colgroupStacks = [],
-        fluid = [],
-        fluidTotal = 0,
-        fixed = [], // Fixed widths of columns in this colgroup.
-        fixedTotal = 0;  // Total fixed width of colgroup.
+export function canonizeLayout(model) {
+  const {colGroups = [{id: DEFAULT_COL_GROUP_ID}], headers = []} = model;
 
-    for (let stack of stacks) {
-      const {targetColgroupId = 'default', width = 80, hidden, sizing} = stack[stack.length - 1].column;
-      if (colgroup.id === targetColgroupId) {
-        let i = colgroupStacks.push(stack) - 1;
-        fixed[i] = 0;
-        fluid[i] = 0;
-        if (hidden) {
-          continue;
-        }
-        if (sizing == Sizing.FLUID) {
-          fluidTotal += width;
-          fluid[i] = width;
+  let canonicRowGroups = canonizeRowGroupsLayout(model.rowGroups, model.dataSets),
+      canonicColGroups = [],
+      existingStacks = flatten(headers.map(toStacks)),
+      totalFluid = 0, // Table total fluid width.
+      totalFixed = 0;
+
+  for (const {id, sizing, className} of colGroups) {
+    let cols = [], // Descriptors for <col> elements.
+        fluid = 0, // Colgroup fluid width.
+        fixed = 0; // Colgroup fixed width.
+
+    for (const stack of existingStacks) {
+      const {column} = stack[stack.length - 1],
+            {targetColgroupId = DEFAULT_COL_GROUP_ID, width = 80} = column;
+      if (column.hidden) {
+        continue; // Ignore hidden columns.
+      }
+      if (id === targetColgroupId) {
+        let col = {stack, column, fixed: 0, fluid: 0, style: {}};
+        if (column.sizing == Sizing.FLUID) {
+          fluid += width;
+          col.fluid = width;
         } else {
-          fixedTotal += width;
-          fixed[i] = width;
+          fixed += width;
+          col.fixed = width;
         }
+        cols.push(col);
       }
     }
-    if (colgroupStacks.length) {
-      let colConstraints = [];
-      for (let j = 0; j < colgroupStacks.length; ++j) {
-        let constraints = {};
-        if (fluid[j]) {
-          let ratio = fluid[j] / fluidTotal;
-          constraints.width = `calc(${ratio * 100}% - ${Math.round(fixedTotal * ratio)}px)`;
-          constraints.minWidth = fluid[j] + 'px';
+    if (cols.length) {
+      for (const col of cols) {
+        if (col.fluid) {
+          let ratio = col.fluid / fluid;
+          col.style.width = `calc(${ratio * 100}% - ${Math.round(fixed * ratio)}px)`;
         } else {
-          constraints.width = fixed[j] + 'px';
+          col.style.width = `${col.fixed}px`;
         }
-        colConstraints.push(constraints);
+        // Save user-provided style to target <col> style.
+        Object.assign(col.style, col.column.style);
       }
-      colgroupRenderDescriptors.push({
-        colgroupStacks,
-        colConstraints,
-        fluidTotal,
-        fixedTotal,
-        sizing: colgroup.sizing,
-        scrollBox: colgroup.scrollBox
-      });
-    }
-  }
-
-  let tableFluidTotal = 0, // Total fluid width of given colgroups.
-      tableFixedTotal = 0, // Total fixed width of given colgroups.
-      tableMinWidth = 0; // Sum of widths of fixed (non-shrinkable) colgroups.
-
-  for (let i = 0; i < colgroupRenderDescriptors.length; ++i) {
-    const {fluidTotal, fixedTotal, sizing} = colgroupRenderDescriptors[i];
-    if (sizing == Sizing.FLUID) {
-      if (fluidTotal) {
-        tableFluidTotal += fixedTotal + fluidTotal;
+      if (sizing == Sizing.FLUID) {
+        if (fluid) {
+          totalFluid += fixed + fluid;
+        } else {
+          totalFixed += fixed;
+        }
       } else {
-        tableFixedTotal += fixedTotal;
+        totalFixed += fixed + fluid;
       }
-    } else {
-      tableFixedTotal += fixedTotal + fluidTotal;
+      canonicColGroups.push({cols, fixed, fluid, sizing, style: {}, constraints: {}, className});
     }
   }
 
-  for (let i = 0; i < colgroupRenderDescriptors.length; ++i) {
-    let {fluidTotal, fixedTotal, sizing} = colgroupRenderDescriptors[i],
-        constraints = {},
-        width = fixedTotal + fluidTotal;
+  for (const {fluid, fixed, sizing, style, constraints} of canonicColGroups) {
+    const width = fixed + fluid; // Minimum width of colgroup.
+
     if (sizing == Sizing.FLUID) {
-      colgroupRenderDescriptors[i].colgroupMinWidth = width + 'px';
-      if (fluidTotal) {
+      constraints.minWidth = `${width}px`;
+      if (fluid) {
         // Colgroup is fluid and has fluid columns.
-        let ratio = width / tableFluidTotal;
-        constraints.width = `calc(${ratio * 100}% - ${Math.round(tableFixedTotal * ratio)}px)`;
+        let ratio = width / totalFluid;
+        style.width = `calc(${ratio * 100}% - ${Math.round(totalFixed * ratio)}px)`;
       } else {
         // Colgroup is fluid but has no fluid columns.
-        constraints.width = `calc(100% - ${tableFixedTotal - width}px)`;
-        constraints.maxWidth = width + 'px';
+        style.width = `calc(100% - ${totalFixed - width}px)`;
+        style.maxWidth = `${width}px`;
       }
     } else {
-      // Colgroup has fixed widths and cannot be shrinked, so it constraints
-      // minimum width of the whole table.
-      constraints.width = width + 'px';
-      tableMinWidth += width;
+      style.width = `${width}px`;
     }
-    colgroupRenderDescriptors[i].colgroupConstraints = constraints;
   }
-  return {colgroupRenderDescriptors, tableMinWidth};
+  return {canonicRowGroups, canonicColGroups, style: {minWidth: `${totalFixed}px`}};
 }

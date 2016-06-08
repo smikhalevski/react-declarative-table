@@ -16,64 +16,73 @@ class App extends React.Component {
     return (
       <div>
         <Table style={{height: '400px'}}
-               structure={{
-                 colgroups: [
-                   {
-                     id:'default',
-                     sizing: 'fluid',
-                     scrollBox: {
-                       outset: true
-                     }
-                   },
-                   {
-                     id: 'frozen',
-                     sizing: 'fluid'
+               colGroups={[
+                 {
+                   id:'default',
+                   sizing: 'fluid',
+                   scrollBox: {
+                     outset: true
                    }
-                 ],
-                 headers: [
-                   {
-                     caption: 'AAA',
-                     headers: [
-                       {
-                         caption: 'BBB',
-                         column: {
-                           key: 'index',
-                           width: 100,
-                           targetColgroupId: 'frozen'
-                         }
-                       },
-                       {
-                         caption: 'CCC',
-                         headers: [
-                           {
-                             caption: 'DDD',
-                             column: {
-                               key: 'ddd',
-                               width: 100,
-                               sizing: 'fluid'
-                             }
-                           },
-                           {
-                             caption: 'FFF',
-                             column: {
-                               key: 'fff',
-                               width: 100
-                             }
-                           }
-                         ]
+                 },
+                 {
+                   id: 'frozen',
+                   sizing: 'fluid'
+                 }
+               ]}
+               rowGroups={[
+                 {id: 'default'}
+               ]}
+               headers={[
+                 {
+                   caption: 'AAA',
+                   headers: [
+                     {
+                       caption: 'BBB',
+                       column: {
+                         key: 'index',
+                         width: 100,
+                         targetColgroupId: 'frozen'
                        }
-                     ]
-                   },
-                   {
-                     caption: 'EEE',
-                     column: {
-                       key: 'eee',
-                       width: 10
+                     },
+                     {
+                       caption: 'CCC',
+                       headers: [
+                         {
+                           caption: 'DDD',
+                           column: {
+                             key: 'ddd',
+                             width: 100,
+                             sizing: 'fluid'
+                           }
+                         },
+                         {
+                           caption: 'FFF',
+                           column: {
+                             key: 'fff',
+                             width: 100
+                           }
+                         }
+                       ]
                      }
+                   ]
+                 },
+                 {
+                   caption: 'EEE',
+                   column: {
+                     key: 'eee',
+                     width: 10
                    }
-                 ]}
-               }
-               dataSet={{offset: 0, count: rows.length, rows}}
+                 }
+               ]}
+               dataSets={[
+                 {
+                   offset: 0,
+                   count: rows.length,
+                   rows
+                 }
+               ]}
+
+
                cellComponent={function({row, column}) {return <a>{row[column.key]}</a>}}
                headerComponent={function({header}) {return <u>{header.caption}</u>}}
         />
