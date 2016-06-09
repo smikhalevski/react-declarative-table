@@ -102,6 +102,14 @@
     flex: 1 1 auto;
     min-height: 1px;
 
+    &:not(:last-child) {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+
+      > .@{data-table}__colgroup > .@{scroll-box}__track--x {
+        visibility: hidden !important;
+      }
+    }
     > .@{data-table}__colgroup {
       &:not(:first-child):not(:last-child) {
         border-radius: 0;

@@ -42,19 +42,13 @@ export class Table extends React.Component {
   };
 
   _checkEnoughRowsId;
-  _renderState; // Rendering model.
-  _normalizedDataSet;
-  _effectiveOffset;
+  _canonicLayout; // Rendering model.
 
   // Offset of topmost record that component intends to render. This record may not be yet available on in data set.
-  _requestedOffset = 0;
+  _requestedOffset = {};
 
   // Number of records that are intended to be rendered. These records may not be available in data set.
-  _requestedRowCount = 0;
-
-  // Rows that are actually rendered in table. They are always empty on initial render to speed up showing table
-  // structure to user.
-  _renderedRows;
+  _requestedRowCount = {};
 
   _renderHeader(header) {
     const {headerComponent} = this.props;
@@ -72,19 +66,23 @@ export class Table extends React.Component {
     return row[column.key];
   }
 
-  _renderThead(stacks, table = [], depth = 0) {
+  _renderRow(tds, i) {
+    return <tr key={i}>{tds}</tr>;
+  }
+
+  _renderThead(cols, table = [], depth = 0) {
     if (table.length <= depth) {
       table[depth] = [];
     }
-    for (let i = 0; i < stacks.length; ++i) {
-      let header = stacks[i][depth];
+    for (let i = 0; i < cols.length; ++i) {
+      let header = cols[i].stack[depth];
       // Last header in stack has no sub-headers by definition.
-      if (depth < stacks[i].length - 1) {
-        let colSpan = [stacks[i]];
+      if (depth < cols[i].stack.length - 1) {
+        let colSpan = [cols[i]];
         // Siblings that can be joined are added to colspan.
-        for (var j = i + 1; j < stacks.length; ++j) {
-          if (depth < stacks[j].length && stacks[i][depth].caption == stacks[j][depth].caption) {
-            colSpan.push(stacks[j]);
+        for (var j = i + 1; j < cols.length; ++j) {
+          if (depth < cols[j].stack.length && cols[i].stack[depth].caption == cols[j].stack[depth].caption) {
+            colSpan.push(cols[j]);
           } else {
             break;
           }
@@ -94,8 +92,8 @@ export class Table extends React.Component {
         table[depth].push(<th key={table[depth].length} className="data-table__th" colSpan={colSpan.length}>{this._renderHeader(header)}</th>);
       } else {
         let totalDepth = 0;
-        for (let stack of stacks) {
-          totalDepth = Math.max(totalDepth, stack.length);
+        for (let col of cols) {
+          totalDepth = Math.max(totalDepth, col.stack.length);
         }
         table[depth].push(<th key={table[depth].length} className="data-table__th" rowSpan={totalDepth - depth} style={{height: '100%'}}>{this._renderHeader(header)}</th>);
       }
@@ -103,19 +101,19 @@ export class Table extends React.Component {
     return table;
   }
 
-  _renderTbody(colgroupStacks, rows, effectiveOffset) {
+  _renderTbody(cols, rows, effectiveOffset) {
     let table = [];
     for (let i = 0; i < rows.length; ++i) {
       table[i] = [];
-      for (let j = 0; j < colgroupStacks.length; ++j) {
-        table[i].push(<td key={effectiveOffset + j} className="data-table__td">{this._renderCell(rows[i], colgroupStacks[j][colgroupStacks[j].length - 1].column)}</td>);
+      for (let j = 0; j < cols.length; ++j) {
+        table[i].push(<td key={effectiveOffset + j} className="data-table__td">{this._renderCell(rows[i], cols[j].column)}</td>);
       }
     }
     return table;
   }
 
-  _renderCols(colConstraints) {
-    return <colgroup>{colConstraints.map((c, i) => <col key={i} style={c}/>)}</colgroup>;
+  _renderCols(cols) {
+    return <colgroup>{cols.map((col, i) => <col key={i} style={col.style}/>)}</colgroup>;
   }
 
   _checkEnoughRows() {
@@ -177,17 +175,17 @@ export class Table extends React.Component {
     clearTimeout(this._checkEnoughRowsId);
   }
 
-  onViewportScroll = targetScrollBox => {
-    for (let desc of this._renderState.colgroupRenderDescriptors) {
-      if (!desc.scrollBoxRef) {
-        continue;
+  onViewportScroll = (targetScrollBox, rowIndex, colIndex) => {
+    const {canonicRowGroups, canonicColGroups} = this._canonicLayout;
+    for (let j = 0; j < canonicRowGroups[rowIndex].scrollBoxes.length; ++j) {
+      if (j != colIndex) {
+        canonicRowGroups[rowIndex].scrollBoxes[j].scrollTo(undefined, targetScrollBox.scrollY, 0, undefined, true);
       }
-      if (desc.scrollBoxRef == targetScrollBox) {
-        if (desc.thead) {
-          desc.thead.scrollLeft = targetScrollBox.scrollX;
-        }
-      } else {
-        desc.scrollBoxRef.scrollTo(undefined, targetScrollBox.scrollY, 0, undefined, true);
+    }
+    canonicColGroups[colIndex].thead.scrollLeft = targetScrollBox.scrollX;
+    for (let i = 0; i < canonicRowGroups.length; ++i) {
+      if (i != rowIndex) {
+        canonicRowGroups[i].scrollBoxes[colIndex].scrollTo(targetScrollBox.scrollX, undefined, 0, undefined, true);
       }
     }
   };
@@ -204,94 +202,105 @@ export class Table extends React.Component {
     if (headless) {
       classNames = classNames.concat('data-table--headless');
     }
-
     let canonicLayout = canonizeLayout(this.props);
 
-
-    return;
-    this._normalizedDataSet = normalizedDataSet;
-    this._effectiveOffset = Math.min(normalizedDataSet.offset, normalizedDataSet.totalCount - this._requestedRowCount);
-
-    // Create an array of rows that should be rendered on viewport. This array can contain less rows than
-    // `_requestedRowCount`, because some of them (leading or trailing) may not be available in data set.
-    let skipOffset = Math.max(0, this._requestedOffset - this._effectiveOffset);
-    this._renderedRows = normalizedDataSet.rows.slice(skipOffset, skipOffset + this._requestedRowCount);
-
-    let topOffset = this._effectiveOffset + Math.max(0, this._requestedOffset - this._effectiveOffset);
-    let topMargin = topOffset * estimatedRowHeight;
-    let bottomMargin = (normalizedDataSet.totalCount - topOffset - this._renderedRows.length) * estimatedRowHeight;
+    this._canonicLayout = canonicLayout;
 
     if (!headless) {
       var theadGroup = (
         <div className="data-table__thead">
-          {renderState.colgroupRenderDescriptors.map((desc, i) => {
-            let thead = this._renderThead(desc.colgroupStacks),
-                tbody = this._renderTbody(desc.colgroupStacks, this._renderedRows.slice(0, 4), this._effectiveOffset),
-                colgroup = this._renderCols(desc.colConstraints);
+          {canonicLayout.canonicColGroups.map((canonicColGroup, i) => {
+            let thead = this._renderThead(canonicColGroup.cols),
+                colgroup = this._renderCols(canonicColGroup.cols);
             return (
-              <div key={i}
-                   ref={ref => desc.thead = ref}
-                   style={desc.colgroupConstraints}
-                   className="data-table__colgroup">
-                <div className="data-table__table-container"
-                     style={{minWidth: desc.colgroupMinWidth}}>
-                  <table>
-                    {colgroup}
-                    <tbody>
-                    {thead.map((tr, i) => <tr key={i}>{tr}</tr>)}
-                    </tbody>
-
-                    <tbody>
-                    {tbody.map((td, i) => <tr key={i} className="data-table__tr">{td}</tr>)}
-                    </tbody>
-                  </table>
+                <div key={i}
+                     ref={ref => canonicColGroup.thead = ref}
+                     style={canonicColGroup.style}
+                     className="data-table__colgroup">
+                  <div className="data-table__table-container"
+                       style={canonicColGroup.constraints}>
+                    <table>
+                      {colgroup}
+                      <tbody>
+                      {thead.map(this._renderRow)}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
             );
           })}
         </div>
       );
     }
-
-    let parity = 'odd';
-    if (this._requestedOffset % 2) {
-      parity = 'even';
-    }
-
     return (
       <div className={classNames.join(' ')}
-           style={{minWidth: renderState.tableMinWidth, ...style}}
-           data-offset={this._requestedOffset}
-           data-parity={parity}>
+           style={{...canonicLayout.style, ...style}}>
         {theadGroup}
-        <div className="data-table__tbody">
-          {renderState.colgroupRenderDescriptors.map((desc, i) => {
-            let tbody = this._renderTbody(desc.colgroupStacks, this._renderedRows, this._effectiveOffset),
-                colgroup = this._renderCols(desc.colConstraints);
-            return (
-              <GenericScrollBox {...desc.scrollBox}
-                                key={i}
-                                ref={ref => {desc.scrollBoxRef = ref; this._referenceScrollBoxEl = ref && findDOMNode(ref)}}
-                                onViewportScroll={this.onViewportScroll}
-                                axes={ScrollAxes.XY}
-                                disabled={disabled}
-                                style={desc.colgroupConstraints}
-                                className="data-table__colgroup">
-                <div className="scroll-box__viewport">
-                  <div className="data-table__table-container"
-                       style={{minWidth: desc.colgroupMinWidth, margin: `${topMargin}px 0 ${bottomMargin}px`}}>
-                    <table ref={ref => desc.tbody = ref}>
-                      {colgroup}
-                      <tbody>
-                      {tbody.map((td, i) => <tr key={i} className="data-table__tr">{td}</tr>)}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </GenericScrollBox>
-            );
-          })}
-        </div>
+        {canonicLayout.canonicRowGroups.map((canonicRowGroup, i) => {
+
+          canonicRowGroup.tbodies = [];
+          canonicRowGroup.scrollBoxes = [];
+
+          let requestedOffset = this._requestedOffset[canonicRowGroup.id] | 0,
+              requestedRowCount = this._requestedRowCount[canonicRowGroup.id] || 20;
+
+          let effectiveOffset = Math.min(canonicRowGroup.offset, canonicRowGroup.totalCount - requestedRowCount);
+
+          // Create an array of rows that should be rendered on viewport. This array can contain less rows than
+          // `_requestedRowCount`, because some of them (leading or trailing) may not be available in data set.
+          let skipOffset = Math.max(0, requestedOffset - effectiveOffset);
+
+          // Rows that are actually rendered in table. They are always empty on initial render to speed up showing table
+          // structure to user.
+          let renderedRows = canonicRowGroup.rows.slice(skipOffset, skipOffset + requestedRowCount);
+
+          let topOffset = effectiveOffset + Math.max(0, requestedOffset - effectiveOffset);
+          let topMargin = topOffset * estimatedRowHeight;
+          let bottomMargin = (canonicRowGroup.totalCount - topOffset - renderedRows.length) * estimatedRowHeight;
+
+          canonicRowGroup.renderedRows = renderedRows;
+          canonicRowGroup.effectiveOffset = effectiveOffset;
+
+          let parity = 'odd';
+          if (effectiveOffset % 2) {
+            parity = 'even';
+          }
+
+          return (
+            <div key={i}
+                 className="data-table__tbody"
+                 style={canonicRowGroup.style}
+                 data-parity={parity}
+                 data-offset={effectiveOffset}>
+              {canonicLayout.canonicColGroups.map((canonicColGroup, j) => {
+                let tbody = this._renderTbody(canonicColGroup.cols, renderedRows, effectiveOffset),
+                    colgroup = this._renderCols(canonicColGroup.cols);
+                return (
+                  <GenericScrollBox {...canonicColGroup.scrollBox}
+                                    key={j}
+                                    ref={ref => canonicRowGroup.scrollBoxes[j] = ref}
+                                    onViewportScroll={targetScrollBox => this.onViewportScroll(targetScrollBox, i, j)}
+                                    axes={ScrollAxes.XY}
+                                    disabled={disabled}
+                                    style={canonicColGroup.style}
+                                    className="data-table__colgroup">
+                    <div className="scroll-box__viewport">
+                      <div className="data-table__table-container"
+                           style={{...canonicColGroup.constraints, margin: `${topMargin}px 0 ${bottomMargin}px`}}>
+                        <table ref={ref => canonicRowGroup.tbodies[j] = ref}>
+                          {colgroup}
+                          <tbody>
+                          {tbody.map(this._renderRow)}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </GenericScrollBox>
+                );
+              })}
+            </div>
+          );
+        })}
       </div>
     );
   }

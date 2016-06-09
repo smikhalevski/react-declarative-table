@@ -30,6 +30,8 @@ class App extends React.Component {
                  }
                ]}
                rowGroups={[
+                 {id: 'default'},
+                 {id: 'default'},
                  {id: 'default'}
                ]}
                headers={[

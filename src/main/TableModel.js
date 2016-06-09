@@ -59,7 +59,7 @@ export function canonizeRowGroupsLayout(rowGroups = [{id: DEFAULT_ROW_GROUP_ID}]
           }
         }
         // Original data set is also stored here to provide it to `onDataSetRowsRangeRequired` as is.
-        canonicRowGroups.push({dataSet, style, className, offset, totalCount, rows});
+        canonicRowGroups.push({id, dataSet, style, className, offset, totalCount, rows});
         break;
       }
     }
@@ -76,7 +76,7 @@ export function canonizeLayout(model) {
       totalFluid = 0, // Table total fluid width.
       totalFixed = 0;
 
-  for (const {id, sizing, className} of colGroups) {
+  for (const {id, sizing, className, scrollBox} of colGroups) {
     let cols = [], // Descriptors for <col> elements.
         fluid = 0, // Colgroup fluid width.
         fixed = 0; // Colgroup fixed width.
@@ -119,9 +119,11 @@ export function canonizeLayout(model) {
       } else {
         totalFixed += fixed + fluid;
       }
-      canonicColGroups.push({cols, fixed, fluid, sizing, style: {}, constraints: {}, className});
+      canonicColGroups.push({cols, fixed, fluid, sizing, scrollBox, style: {}, constraints: {}, className});
     }
   }
+
+  let tableMinWidth;
 
   for (const {fluid, fixed, sizing, style, constraints} of canonicColGroups) {
     const width = fixed + fluid; // Minimum width of colgroup.
@@ -138,8 +140,9 @@ export function canonizeLayout(model) {
         style.maxWidth = `${width}px`;
       }
     } else {
+      tableMinWidth += width;
       style.width = `${width}px`;
     }
   }
-  return {canonicRowGroups, canonicColGroups, style: {minWidth: `${totalFixed}px`}};
+  return {canonicRowGroups, canonicColGroups, style: {minWidth: `${tableMinWidth}px`}};
 }
