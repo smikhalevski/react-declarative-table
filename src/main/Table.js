@@ -2,9 +2,139 @@ import React from 'react';
 import {findDOMNode} from 'react-dom';
 import {GenericScrollBox, ScrollAxes} from 'react-scroll-box';
 import {Sizing, TableDataSetShape, TableColGroupShape, TableRowGroupShape, TableHeaderShape} from './TableShape';
-import {toRenderState, normalizeDataSet, canonizeLayout} from './TableModel';
+import {canonizeLayout} from './TableModel';
 
 const {bool, number, func, oneOfType, string, arrayOf} = React.PropTypes;
+
+export function renderThead(cols, createHeaderContent) {
+  let totalDepth = 0;
+  for (let col of cols) {
+    totalDepth = Math.max(totalDepth, col.stack.length);
+  }
+  const theadContent = [];
+  let spans = [cols];
+  
+  for (let depth = 0; depth < totalDepth; ++depth) {
+    const trContent = [],
+          nestedSpans = [];
+    for (const cols of spans) {
+      for (let i = 0; i < cols.length; ++i) {
+        const {stack: stackI} = cols[i],
+              headerI = stackI[depth],
+              content = createHeaderContent(headerI, stackI, totalDepth, depth);
+        if (depth == stackI.length - 1) {
+          // Last header in stack has no sub-headers by definition.
+          trContent.push(
+            <th key={trContent.length}
+                rowSpan={totalDepth - depth}
+                className="data-table__th data-table__th--leaf">
+              {content}
+            </th>
+          );
+          continue;
+        }
+        const span = [cols[i]];
+        for (var j = i + 1; j < cols.length; ++j) {
+          const {stack: stackJ} = cols[j],
+                headerJ = stackJ[depth];
+          if (depth < stackJ.length && headerI === headerJ) {
+            span.push(cols[j]);
+          } else {
+            break;
+          }
+        }
+        i = j - 1;
+        nestedSpans.push(span);
+        trContent.push(
+          <th key={trContent.length}
+              colSpan={span.length}
+              className="data-table__th data-table__th--group">
+            {content}
+          </th>
+        );
+      }
+    }
+    theadContent.push(<tr key={depth} className="data-table__tr">{trContent}</tr>);
+    spans = nestedSpans;
+  }
+  return <thead>{theadContent}</thead>;
+}
+
+export function renderTbody(cols, rows, offset, createCellContent) {
+  let tbodyContent = [];
+
+  const indices = []; // Indices of row-spanned columns in priority order.
+
+  for (let i = 0; i < cols.length; ++i) {
+    const {rowSpanPriority} = cols[i];
+    if (rowSpanPriority < 0) {
+      continue;
+    }
+    for (let j = 0; j < indices.length + 1; ++j) {
+      if (indices[j] > rowSpanPriority) {
+        continue;
+      }
+      indices.splice(j, 0, i);
+      break;
+    }
+  }
+
+  for (let i = 0; i < rows.length; ++i) {
+
+    const rowSpans = [];
+    let maxRowSpan = 1;
+    for (let k = 0; k < indices.length; ++k) {
+      let x = indices[k],
+          {key} = cols[x].column;
+      rowSpans[x] = 1;
+      for (let j = i; j < rows.length - 1; ++j) {
+        if (rowSpans[x] == rowSpans[indices[k - 1]]) {
+          // Lower priority column cannot span more rows than higher priority.
+          break;
+        }
+        if (rows[j][key] == rows[j + 1][key]) {
+          rowSpans[x]++;
+          maxRowSpan = Math.max(maxRowSpan, rowSpans[x]);
+        } else {
+          break;
+        }
+      }
+    }
+
+    const firstTrContent = [];
+    for (let j = 0; j < cols.length; ++j) {
+      firstTrContent.push(<td key={j} rowSpan={rowSpans[j]} className="data-table__td">{rows[i][cols[i].column.key]}</td>);
+      rowSpans[j]--;
+    }
+    tbodyContent.push(<tr key={offset + tbodyContent.length} className="data-table__tr">{firstTrContent}</tr>);
+
+    for (let k = 1; k < maxRowSpan; ++k) {
+      const trContent = [];
+      for (let j = 0; j < cols.length; ++j) {
+        if (rowSpans[j] > 0) {
+          trContent.push(<td key={j} rowSpan={rowSpans[j]} className="data-table__td">{rows[i][cols[i].column.key]}</td>);
+          rowSpans[j]--;
+        }
+      }
+      tbodyContent.push(<tr key={offset + tbodyContent.length} className="data-table__tr">{trContent}</tr>);
+    }
+
+    i += maxRowSpan - 1;
+  }
+
+  return <tbody>{tbodyContent}</tbody>;
+}
+
+
+
+
+
+
+
+
+
+
+
 
 export class Table extends React.Component {
 
@@ -68,37 +198,6 @@ export class Table extends React.Component {
 
   _renderRow(tds, i) {
     return <tr key={i}>{tds}</tr>;
-  }
-
-  _renderThead(cols, table = [], depth = 0) {
-    if (table.length <= depth) {
-      table[depth] = [];
-    }
-    for (let i = 0; i < cols.length; ++i) {
-      let header = cols[i].stack[depth];
-      // Last header in stack has no sub-headers by definition.
-      if (depth < cols[i].stack.length - 1) {
-        let colSpan = [cols[i]];
-        // Siblings that can be joined are added to colspan.
-        for (var j = i + 1; j < cols.length; ++j) {
-          if (depth < cols[j].stack.length && cols[i].stack[depth].caption == cols[j].stack[depth].caption) {
-            colSpan.push(cols[j]);
-          } else {
-            break;
-          }
-        }
-        i = j - 1;
-        this._renderThead(colSpan, table, depth + 1);
-        table[depth].push(<th key={table[depth].length} className="data-table__th" colSpan={colSpan.length}>{this._renderHeader(header)}</th>);
-      } else {
-        let totalDepth = 0;
-        for (let col of cols) {
-          totalDepth = Math.max(totalDepth, col.stack.length);
-        }
-        table[depth].push(<th key={table[depth].length} className="data-table__th" rowSpan={totalDepth - depth} style={{height: '100%'}}>{this._renderHeader(header)}</th>);
-      }
-    }
-    return table;
   }
 
   _renderTbody(cols, rows, effectiveOffset) {
@@ -210,8 +309,7 @@ export class Table extends React.Component {
       var theadGroup = (
         <div className="data-table__thead">
           {canonicLayout.canonicColGroups.map((canonicColGroup, i) => {
-            let thead = this._renderThead(canonicColGroup.cols),
-                colgroup = this._renderCols(canonicColGroup.cols);
+            let colgroup = this._renderCols(canonicColGroup.cols);
             return (
                 <div key={i}
                      ref={ref => canonicColGroup.thead = ref}
@@ -221,9 +319,7 @@ export class Table extends React.Component {
                        style={canonicColGroup.constraints}>
                     <table>
                       {colgroup}
-                      <tbody>
-                      {thead.map(this._renderRow)}
-                      </tbody>
+                      {renderThead(canonicColGroup.cols, header => header.caption)}
                     </table>
                   </div>
                 </div>
@@ -273,8 +369,7 @@ export class Table extends React.Component {
                  data-parity={parity}
                  data-offset={effectiveOffset}>
               {canonicLayout.canonicColGroups.map((canonicColGroup, j) => {
-                let tbody = this._renderTbody(canonicColGroup.cols, renderedRows, effectiveOffset),
-                    colgroup = this._renderCols(canonicColGroup.cols);
+                let colgroup = this._renderCols(canonicColGroup.cols);
                 return (
                   <GenericScrollBox {...canonicColGroup.scrollBox}
                                     key={j}
@@ -289,9 +384,7 @@ export class Table extends React.Component {
                            style={{...canonicColGroup.constraints, margin: `${topMargin}px 0 ${bottomMargin}px`}}>
                         <table ref={ref => canonicRowGroup.tbodies[j] = ref}>
                           {colgroup}
-                          <tbody>
-                          {tbody.map(this._renderRow)}
-                          </tbody>
+                          {renderTbody(canonicColGroup.cols, renderedRows, effectiveOffset, (row, column) => row[column.key])}
                         </table>
                       </div>
                     </div>

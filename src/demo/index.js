@@ -14,8 +14,8 @@ class App extends React.Component {
 
   render() {
     return (
-      <div>
-        <Table style={{height: '400px'}}
+      <div style={{height: '100%'}}>
+        <Table style={{height: '100%'}}
                colGroups={[
                  {
                    id:'default',
@@ -30,9 +30,9 @@ class App extends React.Component {
                  }
                ]}
                rowGroups={[
-                 {id: 'default'},
-                 {id: 'default'},
                  {id: 'default'}
+                 //{id: 'default', sizing: 'fixed', height: 40},
+                 //{id: 'default', height: 100}
                ]}
                headers={[
                  {
@@ -43,7 +43,7 @@ class App extends React.Component {
                        column: {
                          key: 'index',
                          width: 100,
-                         targetColgroupId: 'frozen'
+                         //targetColgroupId: 'frozen'
                        }
                      },
                      {
@@ -54,7 +54,8 @@ class App extends React.Component {
                            column: {
                              key: 'ddd',
                              width: 100,
-                             sizing: 'fluid'
+                             sizing: 'fluid',
+                             rowSpanPriority: 0
                            }
                          },
                          {
@@ -72,7 +73,8 @@ class App extends React.Component {
                    caption: 'EEE',
                    column: {
                      key: 'eee',
-                     width: 10
+                     width: 10,
+                     rowSpanPriority: 10
                    }
                  }
                ]}
