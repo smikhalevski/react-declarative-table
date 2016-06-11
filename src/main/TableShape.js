@@ -51,7 +51,12 @@ export const TableColumnShape = shape({
    * Negative value means column does not participate in row span.
    * @default -1
    */
-  rowSpanPriority: number
+  rowSpanPriority: number,
+
+  /**
+   * Number of rows that can be spanned if they contain same value for this column.
+   */
+  rowSpanLimit: number
 });
 
 let tableHeaderDescriptor = {
@@ -90,12 +95,7 @@ export const TableColGroupShape = shape({
 });
 
 export const TableDataSetShape = shape({
-  /**
-   * Reference to `TableRowGroupShape.id` of row group where data set should be rendered.
-   * If rowgroup with given identifier is not defined then data set is not rendered.
-   * @default {@link DEFAULT_ROW_GROUP_ID}
-   */
-  targetRowGroupId: string,
+  id: string,
 
   /**
    * Total number of available rows in this data set.
@@ -118,7 +118,7 @@ export const TableDataSetShape = shape({
 
 // Row groups have only vertical scrollbar.
 export const TableRowGroupShape = shape({
-  id: string.isRequired,
+  sourceDataSetId: string,
 
   /**
    * Vertical expansion and contraction mode of group of rows:

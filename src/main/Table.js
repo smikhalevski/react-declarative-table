@@ -244,8 +244,9 @@ export class Table extends React.Component {
     }
     canonicColGroups[colIndex].thead.scrollLeft = targetScrollBox.scrollX;
     for (let i = 0; i < canonicRowGroups.length; ++i) {
-      if (i != rowIndex) {
-        canonicRowGroups[i].scrollBoxes[colIndex].scrollTo(targetScrollBox.scrollX, undefined, 0, undefined, true);
+      const scrollBox = canonicRowGroups[i].scrollBoxes[colIndex];
+      if (i != rowIndex && scrollBox) {
+        scrollBox.scrollTo(targetScrollBox.scrollX, undefined, 0, undefined, true);
       }
     }
   };
@@ -291,8 +292,10 @@ export class Table extends React.Component {
            style={{...canonicLayout.style, ...style}}>
         {theadGroup}
         {canonicLayout.canonicRowGroups.map((canonicRowGroup, i) => {
-          const {className} = canonicRowGroup;
-
+          const {className, totalCount} = canonicRowGroup;
+          if (totalCount == 0) {
+            return null; // Do not render empty row groups.
+          }
           canonicRowGroup.tbodies = [];
           canonicRowGroup.scrollBoxes = [];
 

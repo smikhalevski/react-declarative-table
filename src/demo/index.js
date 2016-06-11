@@ -19,20 +19,25 @@ class App extends React.Component {
                colGroups={[
                  {
                    id: 'frozen',
-                   sizing: 'fluid'
+                   sizing: 'fluid',
+                   scrollBox: {
+                     outset: true,
+                     scrollMinX: 4
+                   }
                  },
                  {
                    id:'default',
                    sizing: 'fluid',
                    scrollBox: {
-                     outset: true
+                     outset: true,
+                     scrollMinX: 4
                    }
                  }
                ]}
                rowGroups={[
-                 {id: 'a', height: 50},
-                 {id: 'b', sizing: 'fixed', height: 100},
-                 {id: 'c', height: 100}
+                 {sourceDataSetId: 'a', height: 50},
+                 {sourceDataSetId: 'a', sizing: 'fixed', height: 100},
+                 {sourceDataSetId: 'a', height: 100}
                ]}
                headers={[
                  {
@@ -42,7 +47,8 @@ class App extends React.Component {
                        caption: 'BBB',
                        column: {
                          key: 'index',
-                         width: 100
+                         width: 100,
+                         targetColgroupId: 'frozen'
                        }
                      },
                      {
@@ -56,7 +62,6 @@ class App extends React.Component {
                              sizing: 'fluid',
                              rowSpanPriority: 2,
                              rowSpanLimit: 2
-                             //targetColgroupId: 'frozen'
                            }
                          },
                          {
@@ -76,13 +81,14 @@ class App extends React.Component {
                      key: 'eee',
                      width: 100,
                      rowSpanPriority: 10,
-                     rowSpanLimit: 5
+                     rowSpanLimit: 5,
+                     targetColgroupId: 'frozen'
                    }
                  }
                ]}
                dataSets={[
                  {
-                   targetRowGroupId: 'a',
+                   id: 'a',
                    offset: 0,
                    count: rows.length,
                    rows

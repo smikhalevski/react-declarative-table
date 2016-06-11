@@ -2,7 +2,7 @@ import {Sizing} from './SizingEnum';
 
 export const
     DEFAULT_COL_GROUP_ID = 'default',
-    DEFAULT_ROW_GROUP_ID = 'default';
+    DEFAULT_DATA_SET_ID = 'default';
 
 export function flatten(array) {
   return Array.prototype.concat.apply([], array);
@@ -36,14 +36,14 @@ export function toStacks(header) {
   return [];
 }
 
-export function canonizeRowGroupsLayout(rowGroups = [{id: DEFAULT_ROW_GROUP_ID}], dataSets = []) {
+export function canonizeRowGroupsLayout(rowGroups = [{sourceDataSetId: DEFAULT_DATA_SET_ID}], dataSets = []) {
   const canonicRowGroups = [];
 
-  for (const {id, sizing, height, className} of rowGroups) {
+  for (const {sourceDataSetId = DEFAULT_DATA_SET_ID, sizing, height, className} of rowGroups) {
     for (const dataSet of dataSets) {
-      const {targetRowGroupId = DEFAULT_ROW_GROUP_ID, rows = [], offset = 0, totalCount = rows.length} = dataSet;
+      const {id = DEFAULT_DATA_SET_ID, rows = [], offset = 0, totalCount = rows.length} = dataSet;
 
-      if (id == targetRowGroupId) {
+      if (sourceDataSetId == id) {
         const style = {};
         if (sizing == Sizing.FIXED) {
           style.flex = '0 0 auto';
@@ -59,7 +59,7 @@ export function canonizeRowGroupsLayout(rowGroups = [{id: DEFAULT_ROW_GROUP_ID}]
           }
         }
         // Original data set is also stored here to provide it to `onDataSetRowsRangeRequired` as is.
-        canonicRowGroups.push({id, dataSet, style, className, offset, totalCount, rows});
+        canonicRowGroups.push({dataSet, style, className, offset, totalCount, rows});
         break;
       }
     }
