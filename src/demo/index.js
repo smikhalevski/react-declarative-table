@@ -18,21 +18,21 @@ class App extends React.Component {
         <Table style={{height: '100%'}}
                colGroups={[
                  {
+                   id: 'frozen',
+                   sizing: 'fluid'
+                 },
+                 {
                    id:'default',
                    sizing: 'fluid',
                    scrollBox: {
                      outset: true
                    }
-                 },
-                 {
-                   id: 'frozen',
-                   sizing: 'fluid'
                  }
                ]}
                rowGroups={[
-                 {id: 'default', height: 50},
-                 {id: 'default', sizing: 'fixed', height: 100},
-                 {id: 'default', height: 100}
+                 {id: 'a', height: 50},
+                 {id: 'b', sizing: 'fixed', height: 100},
+                 {id: 'c', height: 100}
                ]}
                headers={[
                  {
@@ -54,8 +54,9 @@ class App extends React.Component {
                              key: 'ddd',
                              width: 100,
                              sizing: 'fluid',
-                             rowSpanPriority: 0,
-                             targetColgroupId: 'frozen'
+                             rowSpanPriority: 2,
+                             rowSpanLimit: 2
+                             //targetColgroupId: 'frozen'
                            }
                          },
                          {
@@ -75,12 +76,13 @@ class App extends React.Component {
                      key: 'eee',
                      width: 100,
                      rowSpanPriority: 10,
-                     rowSpanLimit: 3
+                     rowSpanLimit: 5
                    }
                  }
                ]}
                dataSets={[
                  {
+                   targetRowGroupId: 'a',
                    offset: 0,
                    count: rows.length,
                    rows

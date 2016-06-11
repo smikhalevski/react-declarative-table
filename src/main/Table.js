@@ -72,7 +72,7 @@ export function renderThead(cols, createHeaderContent, headerSpanPredicate = equ
   return <thead>{theadContent}</thead>;
 }
 
-export function sortByRowSpanPriority({rowSpanPriority: left}, {rowSpanPriority: right}) {
+export function sortByRowSpanPriority({column: {rowSpanPriority: left}}, {column: {rowSpanPriority: right}}) {
   if (typeof left != 'number') {
     return 1;
   }
@@ -127,21 +127,19 @@ export function renderTbody(cols, rows, offset, createCellContent) {
 export class Table extends React.Component {
 
   static defaultProps = {
+    createHeaderContent: (header, stack, headerDepth, depth) => header.caption,
+    createCellContent: (row, column, rowSpan) => row[column.key],
     className: 'data-table--wrapped',
     disabled: false,
     headless: false,
-    estimatedRowHeight: 24,
-    cellComponent: null,
-    headerComponent: null,
+    estimatedRowHeight: 21,
     onDataSetRowsRangeRequired: (requiredOffset, requiredLimit, dataSet) => {},
     // Number of rows to render off-screen to make scroll re-rendering fully invisible.
     offscreenRowCount: 8,
     // `offscreenRowCount / 2` above viewport and `offscreenRowCount / 2` below viewport
     repaintZoneRowCount: 2,
     // Number of rows requested from server.
-    bufferRowCount: 1000,
-    createHeaderContent: (header, stack, headerDepth, depth) => header.caption,
-    createCellContent: (row, column, rowSpan) => row[column.key]
+    bufferRowCount: 1000
   };
 
   static propTypes = {
@@ -150,86 +148,91 @@ export class Table extends React.Component {
     headers: arrayOf(TableHeaderShape.isRequired),
     dataSets: arrayOf(TableDataSetShape.isRequired),
 
+    createHeaderContent: func,
+    createCellContent: func,
+
     disabled: bool,
     headless: bool,
     estimatedRowHeight: number,
     onDataSetRowsRangeRequired: func,
     offscreenRowCount: number,
     repaintZoneRowCount: number,
-    bufferRowCount: number,
-    cellComponent: oneOfType([func, string]),
-    headerComponent: oneOfType([func, string]),
-
-    createHeaderContent: func,
-    createCellContent: func
+    bufferRowCount: number
   };
 
   _checkEnoughRowsId;
   _canonicLayout; // Rendering model.
 
   // Offset of topmost record that component intends to render. This record may not be yet available on in data set.
-  _requestedOffset = {};
+  _requestedOffset = [];
 
   // Number of records that are intended to be rendered. These records may not be available in data set.
-  _requestedRowCount = {};
+  _requestedRowCount = [];
 
   _checkEnoughRows() {
-    const {_requestedOffset, _requestedRowCount} = this;
     const {estimatedRowHeight, onDataSetRowsRangeRequired, repaintZoneRowCount, offscreenRowCount, bufferRowCount} = this.props;
 
-    let scrollBox = this._renderState.colgroupRenderDescriptors[0].scrollBoxRef;
-    if (!scrollBox) {
-      return;
-    }
+    for (let i = 0; i < this._canonicLayout.canonicRowGroups.length; ++i) {
+      const canonicRowGroup = this._canonicLayout.canonicRowGroups[i];
 
-    // Offset of viewport in rows.
-    const viewportOffset = Math.floor(scrollBox.scrollY / estimatedRowHeight);
+      const requestedOffset = this._requestedOffset[i] | 0,
+            requestedRowCount = this._requestedRowCount[i] | 0,
+            scrollBox = canonicRowGroup.scrollBoxes[0];
 
-    // Number of rows that are visible on screen.
-    const viewportRowCount = Math.ceil(this._referenceScrollBoxEl.clientHeight / estimatedRowHeight);
+      // Offset of viewport in rows.
+      const viewportOffset = Math.floor(scrollBox.scrollY / estimatedRowHeight);
 
-    const dataSet = this._normalizedDataSet,
-          availableRowCount = dataSet.totalCount,
-          effectiveOffset = this._effectiveOffset;
+      // Number of rows that are visible on screen.
+      const viewportRowCount = Math.ceil(findDOMNode(scrollBox).clientHeight / estimatedRowHeight);
 
-    const isDangerAbove = _requestedOffset > 0 && _requestedOffset + repaintZoneRowCount >= viewportOffset,
-          isDangerBelow = _requestedOffset + _requestedRowCount < availableRowCount && Math.max(0, _requestedOffset + _requestedRowCount - repaintZoneRowCount) <= viewportOffset + viewportRowCount,
-          isRowsDisappeared = _requestedOffset + _requestedRowCount > availableRowCount;
+      const {dataSet, totalCount, effectiveOffset} = canonicRowGroup;
 
-    if (isDangerAbove || isDangerBelow || isRowsDisappeared) {
-      // Render of additional rows required because user has reached danger zones while scrolling.
-      let offset = Math.min(availableRowCount - viewportRowCount, viewportOffset) - offscreenRowCount / 2;
+      const isDangerAbove = requestedOffset > 0 && requestedOffset + repaintZoneRowCount >= viewportOffset,
+            isDangerBelow = requestedOffset + requestedRowCount < totalCount && Math.max(0, requestedOffset + requestedRowCount - repaintZoneRowCount) <= viewportOffset + viewportRowCount,
+            isRowsDisappeared = requestedOffset + requestedRowCount > totalCount;
 
-      this._requestedOffset = Math.max(0, Math.floor(offset));
-      this._requestedRowCount = Math.min(viewportRowCount + offscreenRowCount + Math.min(0, offset), availableRowCount - this._requestedOffset);
+      if (isDangerAbove || isDangerBelow || isRowsDisappeared) {
+        // Render of additional rows required because user has reached danger zones while scrolling.
+        const offset = Math.min(totalCount - viewportRowCount, viewportOffset) - offscreenRowCount / 2;
 
-      // Request new data set range is required rendering range is out of its bounds.
-      const isInsufficientAbove = this._requestedOffset < effectiveOffset,
-            isInsufficientBelow = this._requestedOffset + this._requestedRowCount > effectiveOffset + dataSet.rows.length;
+        const nextRequestedOffset = Math.max(0, Math.floor(offset)),
+              nextRequestedRowCount = Math.min(viewportRowCount + offscreenRowCount + Math.min(0, offset), totalCount - nextRequestedOffset);
 
-      if (isInsufficientAbove || isInsufficientBelow) {
-        let bufferOffset = Math.round(this._requestedOffset - (bufferRowCount - this._requestedRowCount) / 2);
-        onDataSetRowsRangeRequired(Math.max(0, bufferOffset), bufferRowCount + Math.min(0, bufferOffset), this.props.dataSet);
+        this._requestedOffset[i] = nextRequestedOffset;
+        this._requestedRowCount[i] = nextRequestedRowCount;
 
-        // TODO Do we need to re-render here?
-        //this.setState({});
-      } else {
-        // Just request component repaint.
-        this.setState({});
+        // Request new data set range is required rendering range is out of its bounds.
+        const isInsufficientAbove = nextRequestedOffset < effectiveOffset,
+              isInsufficientBelow = nextRequestedOffset + nextRequestedRowCount > effectiveOffset + dataSet.rows.length;
+
+        if (isInsufficientAbove || isInsufficientBelow) {
+          let bufferOffset = Math.round(nextRequestedOffset - (bufferRowCount - nextRequestedRowCount) / 2);
+          onDataSetRowsRangeRequired(Math.max(0, bufferOffset), bufferRowCount + Math.min(0, bufferOffset), canonicRowGroup.dataSet);
+        } else {
+          this.setState({});
+        }
       }
     }
   }
 
   componentDidMount () {
-    //let scheduledCheckEnoughRows = () => {
-    //  this._checkEnoughRows();
-    //  this._checkEnoughRowsId = setTimeout(scheduledCheckEnoughRows, 200);
-    //};
-    //scheduledCheckEnoughRows();
+    let scheduledCheckEnoughRows = () => {
+      this._checkEnoughRows();
+      if (window.cancelAnimationFrame) {
+        this._checkEnoughRowsId = requestAnimationFrame(scheduledCheckEnoughRows);
+      } else {
+        this._checkEnoughRowsId = setTimeout(scheduledCheckEnoughRows, 100);
+      }
+    };
+    scheduledCheckEnoughRows();
   }
 
   componentWillUnmount() {
-    clearTimeout(this._checkEnoughRowsId);
+    if (window.cancelAnimationFrame) {
+      cancelAnimationFrame(this._checkEnoughRowsId);
+    } else {
+      clearTimeout(this._checkEnoughRowsId);
+    }
   }
 
   onViewportScroll = (targetScrollBox, rowIndex, colIndex) => {
@@ -288,12 +291,13 @@ export class Table extends React.Component {
            style={{...canonicLayout.style, ...style}}>
         {theadGroup}
         {canonicLayout.canonicRowGroups.map((canonicRowGroup, i) => {
+          const {className} = canonicRowGroup;
 
           canonicRowGroup.tbodies = [];
           canonicRowGroup.scrollBoxes = [];
 
-          let requestedOffset = this._requestedOffset[canonicRowGroup.id] | 0,
-              requestedRowCount = this._requestedRowCount[canonicRowGroup.id] || 20;
+          let requestedOffset = this._requestedOffset[i] | 0,
+              requestedRowCount = this._requestedRowCount[i] | 0;
 
           let effectiveOffset = Math.min(canonicRowGroup.offset, canonicRowGroup.totalCount - requestedRowCount);
 
@@ -312,16 +316,15 @@ export class Table extends React.Component {
           canonicRowGroup.renderedRows = renderedRows;
           canonicRowGroup.effectiveOffset = effectiveOffset;
 
-          let parity = 'odd';
-          if (effectiveOffset % 2) {
-            parity = 'even';
+          let classNames = ['data-table__tbody'];
+          if (className) {
+            classNames = classNames.concat(className);
           }
-
           return (
             <div key={i}
-                 className="data-table__tbody"
+                 className={classNames.join(' ')}
                  style={canonicRowGroup.style}
-                 data-parity={parity}
+                 data-parity={effectiveOffset % 2 ? 'even' : 'odd'}
                  data-offset={effectiveOffset}>
               {canonicLayout.canonicColGroups.map((canonicColGroup, j) =>
                 <GenericScrollBox {...canonicColGroup.scrollBox}
