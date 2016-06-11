@@ -30,9 +30,9 @@ class App extends React.Component {
                  }
                ]}
                rowGroups={[
-                 {id: 'default'}
-                 //{id: 'default', sizing: 'fixed', height: 40},
-                 //{id: 'default', height: 100}
+                 {id: 'default', height: 50},
+                 {id: 'default', sizing: 'fixed', height: 100},
+                 {id: 'default', height: 100}
                ]}
                headers={[
                  {
@@ -42,8 +42,7 @@ class App extends React.Component {
                        caption: 'BBB',
                        column: {
                          key: 'index',
-                         width: 100,
-                         //targetColgroupId: 'frozen'
+                         width: 100
                        }
                      },
                      {
@@ -55,7 +54,8 @@ class App extends React.Component {
                              key: 'ddd',
                              width: 100,
                              sizing: 'fluid',
-                             rowSpanPriority: 0
+                             rowSpanPriority: 0,
+                             targetColgroupId: 'frozen'
                            }
                          },
                          {
@@ -73,8 +73,9 @@ class App extends React.Component {
                    caption: 'EEE',
                    column: {
                      key: 'eee',
-                     width: 10,
-                     rowSpanPriority: 10
+                     width: 100,
+                     rowSpanPriority: 10,
+                     rowSpanLimit: 3
                    }
                  }
                ]}
@@ -85,10 +86,6 @@ class App extends React.Component {
                    rows
                  }
                ]}
-
-
-               cellComponent={function({row, column}) {return <a>{row[column.key]}</a>}}
-               headerComponent={function({header}) {return <u>{header.caption}</u>}}
         />
       </div>
     );

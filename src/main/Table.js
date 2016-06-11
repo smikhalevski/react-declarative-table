@@ -6,48 +6,60 @@ import {canonizeLayout} from './TableModel';
 
 const {bool, number, func, oneOfType, string, arrayOf} = React.PropTypes;
 
-export function renderThead(cols, createHeaderContent) {
-  let totalDepth = 0;
+export function renderColgroup(cols) {
+  let colgroupContent = [];
   for (let col of cols) {
-    totalDepth = Math.max(totalDepth, col.stack.length);
+    colgroupContent.push(<col key={colgroupContent.length} style={col.style}/>);
+  }
+  return <colgroup>{colgroupContent}</colgroup>;
+}
+
+export function equalityHeaderSpanPredicate(headerI, headerJ) {
+  return headerI == headerJ;
+}
+
+export function renderThead(cols, createHeaderContent, headerSpanPredicate = equalityHeaderSpanPredicate) {
+  let headerDepth = 0;
+  for (let col of cols) {
+    headerDepth = Math.max(headerDepth, col.stack.length);
   }
   const theadContent = [];
-  let spans = [cols];
+  let colSpans = [cols];
   
-  for (let depth = 0; depth < totalDepth; ++depth) {
+  for (let depth = 0; depth < headerDepth; ++depth) {
     const trContent = [],
-          nestedSpans = [];
-    for (const cols of spans) {
+          nestedColSpans = [];
+    for (const cols of colSpans) {
       for (let i = 0; i < cols.length; ++i) {
         const {stack: stackI} = cols[i],
               headerI = stackI[depth],
-              content = createHeaderContent(headerI, stackI, totalDepth, depth);
+              content = createHeaderContent(headerI, stackI, headerDepth, depth);
         if (depth == stackI.length - 1) {
           // Last header in stack has no sub-headers by definition.
           trContent.push(
             <th key={trContent.length}
-                rowSpan={totalDepth - depth}
+                rowSpan={headerDepth - depth}
                 className="data-table__th data-table__th--leaf">
               {content}
             </th>
           );
           continue;
         }
-        const span = [cols[i]];
+        const colSpan = [cols[i]];
         for (var j = i + 1; j < cols.length; ++j) {
           const {stack: stackJ} = cols[j],
                 headerJ = stackJ[depth];
-          if (depth < stackJ.length && headerI === headerJ) {
-            span.push(cols[j]);
+          if (depth < stackJ.length && headerSpanPredicate(headerI, headerJ)) {
+            colSpan.push(cols[j]);
           } else {
             break;
           }
         }
         i = j - 1;
-        nestedSpans.push(span);
+        nestedColSpans.push(colSpan);
         trContent.push(
           <th key={trContent.length}
-              colSpan={span.length}
+              colSpan={colSpan.length}
               className="data-table__th data-table__th--group">
             {content}
           </th>
@@ -55,86 +67,62 @@ export function renderThead(cols, createHeaderContent) {
       }
     }
     theadContent.push(<tr key={depth} className="data-table__tr">{trContent}</tr>);
-    spans = nestedSpans;
+    colSpans = nestedColSpans;
   }
   return <thead>{theadContent}</thead>;
 }
 
-export function renderTbody(cols, rows, offset, createCellContent) {
-  let tbodyContent = [];
-
-  const indices = []; // Indices of row-spanned columns in priority order.
-
-  for (let i = 0; i < cols.length; ++i) {
-    const {rowSpanPriority} = cols[i];
-    if (rowSpanPriority < 0) {
-      continue;
-    }
-    for (let j = 0; j < indices.length + 1; ++j) {
-      if (indices[j] > rowSpanPriority) {
-        continue;
-      }
-      indices.splice(j, 0, i);
-      break;
-    }
+export function sortByRowSpanPriority({rowSpanPriority: left}, {rowSpanPriority: right}) {
+  if (typeof left != 'number') {
+    return 1;
   }
-
-  for (let i = 0; i < rows.length; ++i) {
-
-    const rowSpans = [];
-    let maxRowSpan = 1;
-    for (let k = 0; k < indices.length; ++k) {
-      let x = indices[k],
-          {key} = cols[x].column;
-      rowSpans[x] = 1;
-      for (let j = i; j < rows.length - 1; ++j) {
-        if (rowSpans[x] == rowSpans[indices[k - 1]]) {
-          // Lower priority column cannot span more rows than higher priority.
-          break;
-        }
-        if (rows[j][key] == rows[j + 1][key]) {
-          rowSpans[x]++;
-          maxRowSpan = Math.max(maxRowSpan, rowSpans[x]);
-        } else {
-          break;
-        }
-      }
-    }
-
-    const firstTrContent = [];
-    for (let j = 0; j < cols.length; ++j) {
-      firstTrContent.push(<td key={j} rowSpan={rowSpans[j]} className="data-table__td">{rows[i][cols[i].column.key]}</td>);
-      rowSpans[j]--;
-    }
-    tbodyContent.push(<tr key={offset + tbodyContent.length} className="data-table__tr">{firstTrContent}</tr>);
-
-    for (let k = 1; k < maxRowSpan; ++k) {
-      const trContent = [];
-      for (let j = 0; j < cols.length; ++j) {
-        if (rowSpans[j] > 0) {
-          trContent.push(<td key={j} rowSpan={rowSpans[j]} className="data-table__td">{rows[i][cols[i].column.key]}</td>);
-          rowSpans[j]--;
-        }
-      }
-      tbodyContent.push(<tr key={offset + tbodyContent.length} className="data-table__tr">{trContent}</tr>);
-    }
-
-    i += maxRowSpan - 1;
+  if (typeof right != 'number') {
+    return -1;
   }
-
-  return <tbody>{tbodyContent}</tbody>;
+  return right - left;
 }
 
-
-
-
-
-
-
-
-
-
-
+export function renderTbody(cols, rows, offset, createCellContent) {
+  const sortedCols = cols.slice().sort(sortByRowSpanPriority),
+        colContents = [];
+  for (let k = 0; k < sortedCols.length; ++k) {
+    const {key, rowSpanPriority, rowSpanLimit = rows.length} = sortedCols[k].column,
+          colContent = [];
+    let i = 0;
+    while (i < rows.length) {
+      let rowSpan = 1;
+      if (typeof rowSpanPriority == 'number') {
+        for (let j = i + 1; j < rows.length; ++j) {
+          if (rows[i][key] == rows[j][key] && rowSpan < rowSpanLimit && (k == 0 || !colContents[k - 1][j])) {
+            colContent[j] = null;
+            rowSpan++;
+          } else {
+            break;
+          }
+        }
+      }
+      colContent[i] = (
+        <td key={k}
+            rowSpan={rowSpan}
+            className="data-table__td">
+          {createCellContent(rows[i], sortedCols[k].column, rowSpan)}
+        </td>
+      );
+      i += rowSpan;
+    }
+    colContents[k] = colContent;
+  }
+  const tbodyContent = [];
+  for (let i = 0; i < rows.length; ++i) {
+    const trContent = [];
+    for (const col of cols) {
+      let k = sortedCols.indexOf(col);
+      trContent.push(colContents[k][i]);
+    }
+    tbodyContent.push(<tr key={offset + i} className="data-table__tr">{trContent}</tr>);
+  }
+  return <tbody>{tbodyContent}</tbody>;
+}
 
 export class Table extends React.Component {
 
@@ -151,7 +139,9 @@ export class Table extends React.Component {
     // `offscreenRowCount / 2` above viewport and `offscreenRowCount / 2` below viewport
     repaintZoneRowCount: 2,
     // Number of rows requested from server.
-    bufferRowCount: 1000
+    bufferRowCount: 1000,
+    createHeaderContent: (header, stack, headerDepth, depth) => header.caption,
+    createCellContent: (row, column, rowSpan) => row[column.key]
   };
 
   static propTypes = {
@@ -168,7 +158,10 @@ export class Table extends React.Component {
     repaintZoneRowCount: number,
     bufferRowCount: number,
     cellComponent: oneOfType([func, string]),
-    headerComponent: oneOfType([func, string])
+    headerComponent: oneOfType([func, string]),
+
+    createHeaderContent: func,
+    createCellContent: func
   };
 
   _checkEnoughRowsId;
@@ -179,41 +172,6 @@ export class Table extends React.Component {
 
   // Number of records that are intended to be rendered. These records may not be available in data set.
   _requestedRowCount = {};
-
-  _renderHeader(header) {
-    const {headerComponent} = this.props;
-    if (headerComponent) {
-      return React.createElement(headerComponent, {header, table: this.props});
-    }
-    return header.caption;
-  }
-
-  _renderCell(row, column) {
-    const {cellComponent} = this.props;
-    if (cellComponent) {
-      return React.createElement(cellComponent, {row, column, table: this.props});
-    }
-    return row[column.key];
-  }
-
-  _renderRow(tds, i) {
-    return <tr key={i}>{tds}</tr>;
-  }
-
-  _renderTbody(cols, rows, effectiveOffset) {
-    let table = [];
-    for (let i = 0; i < rows.length; ++i) {
-      table[i] = [];
-      for (let j = 0; j < cols.length; ++j) {
-        table[i].push(<td key={effectiveOffset + j} className="data-table__td">{this._renderCell(rows[i], cols[j].column)}</td>);
-      }
-    }
-    return table;
-  }
-
-  _renderCols(cols) {
-    return <colgroup>{cols.map((col, i) => <col key={i} style={col.style}/>)}</colgroup>;
-  }
 
   _checkEnoughRows() {
     const {_requestedOffset, _requestedRowCount} = this;
@@ -290,7 +248,7 @@ export class Table extends React.Component {
   };
 
   render() {
-    const {style, className, disabled, headless, estimatedRowHeight} = this.props;
+    const {style, className, disabled, headless, estimatedRowHeight, createHeaderContent, createCellContent} = this.props;
     let classNames = ['data-table'];
     if (className) {
       classNames = classNames.concat(className);
@@ -308,23 +266,20 @@ export class Table extends React.Component {
     if (!headless) {
       var theadGroup = (
         <div className="data-table__thead">
-          {canonicLayout.canonicColGroups.map((canonicColGroup, i) => {
-            let colgroup = this._renderCols(canonicColGroup.cols);
-            return (
-                <div key={i}
-                     ref={ref => canonicColGroup.thead = ref}
-                     style={canonicColGroup.style}
-                     className="data-table__colgroup">
-                  <div className="data-table__table-container"
-                       style={canonicColGroup.constraints}>
-                    <table>
-                      {colgroup}
-                      {renderThead(canonicColGroup.cols, header => header.caption)}
-                    </table>
-                  </div>
-                </div>
-            );
-          })}
+          {canonicLayout.canonicColGroups.map((canonicColGroup, i) =>
+            <div key={i}
+                 ref={ref => canonicColGroup.thead = ref}
+                 style={canonicColGroup.style}
+                 className="data-table__colgroup">
+              <div className="data-table__table-container"
+                   style={canonicColGroup.constraints}>
+                <table>
+                  {renderColgroup(canonicColGroup.cols)}
+                  {renderThead(canonicColGroup.cols, createHeaderContent)}
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       );
     }
@@ -368,29 +323,26 @@ export class Table extends React.Component {
                  style={canonicRowGroup.style}
                  data-parity={parity}
                  data-offset={effectiveOffset}>
-              {canonicLayout.canonicColGroups.map((canonicColGroup, j) => {
-                let colgroup = this._renderCols(canonicColGroup.cols);
-                return (
-                  <GenericScrollBox {...canonicColGroup.scrollBox}
-                                    key={j}
-                                    ref={ref => canonicRowGroup.scrollBoxes[j] = ref}
-                                    onViewportScroll={targetScrollBox => this.onViewportScroll(targetScrollBox, i, j)}
-                                    axes={ScrollAxes.XY}
-                                    disabled={disabled}
-                                    style={canonicColGroup.style}
-                                    className="data-table__colgroup">
-                    <div className="scroll-box__viewport">
-                      <div className="data-table__table-container"
-                           style={{...canonicColGroup.constraints, margin: `${topMargin}px 0 ${bottomMargin}px`}}>
-                        <table ref={ref => canonicRowGroup.tbodies[j] = ref}>
-                          {colgroup}
-                          {renderTbody(canonicColGroup.cols, renderedRows, effectiveOffset, (row, column) => row[column.key])}
-                        </table>
-                      </div>
+              {canonicLayout.canonicColGroups.map((canonicColGroup, j) =>
+                <GenericScrollBox {...canonicColGroup.scrollBox}
+                                  key={j}
+                                  ref={ref => canonicRowGroup.scrollBoxes[j] = ref}
+                                  onViewportScroll={targetScrollBox => this.onViewportScroll(targetScrollBox, i, j)}
+                                  axes={ScrollAxes.XY}
+                                  disabled={disabled}
+                                  style={canonicColGroup.style}
+                                  className="data-table__colgroup">
+                  <div className="scroll-box__viewport">
+                    <div className="data-table__table-container"
+                         style={{...canonicColGroup.constraints, margin: `${topMargin}px 0 ${bottomMargin}px`}}>
+                      <table ref={ref => canonicRowGroup.tbodies[j] = ref}>
+                        {renderColgroup(canonicColGroup.cols)}
+                        {renderTbody(canonicColGroup.cols, renderedRows, effectiveOffset, createCellContent)}
+                      </table>
                     </div>
-                  </GenericScrollBox>
-                );
-              })}
+                  </div>
+                </GenericScrollBox>
+              )}
             </div>
           );
         })}
