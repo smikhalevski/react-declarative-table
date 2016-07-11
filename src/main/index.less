@@ -9,7 +9,7 @@
   flex-direction: column;
 
   &--wrapped {
-    > .@{data-table}__tbody > .@{data-table}__colgroup {
+    > .@{data-table}__tbody > .@{data-table}__tbody-colgroup {
       .scroll-box-wrap();
     }
   }
@@ -21,110 +21,117 @@
     flex-direction: row;
     border-radius: inherit;
   }
-  &__colgroup {
+  &__thead-colgroup,
+  &__tbody-colgroup {
     position: relative;
     border-radius: inherit;
+  }
+  &__thead-colgroup + .@{data-table}__thead-colgroup,
+  &__tbody-colgroup + .@{data-table}__tbody-colgroup {
+    border-left: none;
+  }
+  &__thead-container,
+  &__tbody-container {
+    // Otherwise scroll does not show up if table has no data but headers overflow table width.
+    min-height: 1px;
+  }
+  &__thead-table,
+  &__tbody-table {
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: collapse;
+  }
+  &__thead-tr {
+    &:first-child > .@{data-table}__th {
+      border-top: none;
+    }
+    &:last-child > .@{data-table}__th {
+      border-bottom: none;
+    }
+  }
+  &__tbody-tr {
+    &:first-child > .@{data-table}__td {
+      border-top: none;
+    }
+    &:last-child > .@{data-table}__td {
+      border-bottom: none;
+    }
+  }
+  &__th,
+  &__td {
+    overflow: hidden;
 
-    + .@{data-table}__colgroup {
+    &:first-child {
       border-left: none;
     }
-  }
-  &__table-container {
-    min-height: 1px; // Otherwise scroll does not show up if table has no data but headers overflow table width.
-
-    > table {
-      table-layout: fixed;
-      width: 100%;
-      border-collapse: collapse;
-
-      > tbody {
-        > tr {
-          > th,
-          > td {
-            overflow: hidden;
-
-            &:first-child {
-              border-left: none;
-            }
-            &:last-child {
-              border-right: none;
-            }
-            &[rowspan] {
-              border-bottom: none;
-            }
-          }
-          &:first-child {
-            > th,
-            > td {
-              border-top: none;
-            }
-          }
-          &:last-child {
-            > th,
-            > td {
-              border-bottom: none;
-            }
-          }
-        }
-      }
+    &:last-child {
+      border-right: none;
+    }
+    &[rowspan] {
+      border-bottom: none;
     }
   }
+
+  // Thead
+  // ==============
   &__thead {
     -ms-flex: 0 0 auto;
     flex: 0 0 auto;
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
+  }
+  &__thead-colgroup {
+    display: -ms-flexbox;
+    display: flex;
+    overflow: hidden;
+    -ms-flex-direction: row;
+    flex-direction: row;
 
-    > .@{data-table}__colgroup {
-      display: -ms-flexbox;
-      display: flex;
-      overflow: hidden;
-      -ms-flex-direction: row;
-      flex-direction: row;
-
-      &:not(:first-child):not(:last-child) {
-        border-radius: 0;
-      }
-      &:first-child:not(:last-child) {
-        border-top-right-radius: 0;
-      }
-      &:last-child:not(:first-child) {
-        border-top-left-radius: 0;
-      }
-      > .@{data-table}__table-container {
-        display: flex;
-
-        > table {
-          height: 100%;
-
-          > tbody > tr:last-child {
-            height: 100%;
-          }
-        }
-      }
+    &:not(:first-child):not(:last-child) {
+      border-radius: 0;
+    }
+    &:first-child:not(:last-child) {
+      border-top-right-radius: 0;
+    }
+    &:last-child:not(:first-child) {
+      border-top-left-radius: 0;
     }
   }
+  &__thead-container {
+    display: flex;
+  }
+  &__thead-table,
+  &__thead-tr:last-child {
+    height: 100%;
+  }
+
+  // Tbody
+  // ==============
   &__tbody {
     -ms-flex: 1 1 auto;
     flex: 1 1 auto;
     min-height: 1px;
 
+    &:not(:first-child) {
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+    }
     &:not(:last-child) {
       border-bottom-left-radius: 0;
       border-bottom-right-radius: 0;
     }
-    > .@{data-table}__colgroup {
-      &:not(:first-child):not(:last-child) {
-        border-radius: 0;
-      }
-      &:first-child:not(:last-child) {
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
-      }
-      &:last-child:not(:first-child) {
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
-      }
+  }
+  &__tbody-colgroup {
+    &:not(:first-child):not(:last-child) {
+      border-radius: 0;
+    }
+    &:first-child:not(:last-child) {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+    &:last-child:not(:first-child) {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
     }
   }
   &:not(.@{data-table}--headless) {
@@ -135,31 +142,35 @@
   }
 }
 
+
 @data-table-border-radius: 6px;
 @data-table-border: solid 1px #959595;
 
 .@{data-table} {
   border-radius: @data-table-border-radius;
 
-  &__thead > .@{data-table}__colgroup {
+  &__thead-colgroup {
     background-color: #ddd;
   }
   &__th,
   &__td,
-  &__colgroup {
+  &__thead-colgroup,
+  &__tbody-colgroup {
     border: @data-table-border;
   }
 
-  .@{data-table}__tr:nth-child(even) {
+  &__tbody-tr:nth-child(even) {
     background-color: fade(#000, 5%);
   }
 
   &--striped[data-parity="even"] {
-    .@{data-table}__tr:nth-child(odd) {
-      background-color: fade(#000, 5%);
-    }
-    .@{data-table}__tr:nth-child(even) {
-      background-color: transparent;
+    .@{data-table}__tbody-tr {
+      &:nth-child(odd) {
+        background-color: fade(#000, 5%);
+      }
+      &:nth-child(even) {
+        background-color: transparent;
+      }
     }
   }
 }

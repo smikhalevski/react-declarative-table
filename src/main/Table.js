@@ -66,7 +66,7 @@ export function renderThead(cols, createHeaderContent, headerSpanPredicate = equ
         );
       }
     }
-    theadContent.push(<tr key={depth} className="data-table__tr">{trContent}</tr>);
+    theadContent.push(<tr key={depth} className="data-table__thead-tr">{trContent}</tr>);
     colSpans = nestedColSpans;
   }
   return <tbody>{theadContent}</tbody>;
@@ -119,7 +119,7 @@ export function renderTbody(cols, rows, offset, createCellContent) {
       let k = sortedCols.indexOf(col);
       trContent.push(colContents[k][i]);
     }
-    tbodyContent.push(<tr key={offset + i} className="data-table__tr">{trContent}</tr>);
+    tbodyContent.push(<tr key={offset + i} className="data-table__tbody-tr">{trContent}</tr>);
   }
   return <tbody>{tbodyContent}</tbody>;
 }
@@ -242,7 +242,9 @@ export class Table extends React.Component {
         canonicRowGroups[rowIndex].scrollBoxes[j].scrollTo(undefined, targetScrollBox.scrollY, 0, undefined, true);
       }
     }
-    canonicColGroups[colIndex].thead.scrollLeft = targetScrollBox.scrollX;
+    if (!this.props.headless) {
+      canonicColGroups[colIndex].thead.scrollLeft = targetScrollBox.scrollX;
+    }
     for (let i = 0; i < canonicRowGroups.length; ++i) {
       const scrollBox = canonicRowGroups[i].scrollBoxes[colIndex];
       if (i != rowIndex && scrollBox) {
@@ -274,10 +276,10 @@ export class Table extends React.Component {
             <div key={i}
                  ref={ref => canonicColGroup.thead = ref}
                  style={canonicColGroup.style}
-                 className="data-table__colgroup">
-              <div className="data-table__table-container"
+                 className="data-table__thead-colgroup">
+              <div className="data-table__thead-container"
                    style={canonicColGroup.constraints}>
-                <table>
+                <table className="data-table__thead-table">
                   {renderColGroup(canonicColGroup.cols)}
                   {renderThead(canonicColGroup.cols, createHeaderContent)}
                 </table>
@@ -338,11 +340,12 @@ export class Table extends React.Component {
                                   hideScrollBarX={i < canonicLayout.canonicRowGroups.length - 1}
                                   hideScrollBarY={j < canonicLayout.canonicColGroups.length - 1}
                                   style={canonicColGroup.style}
-                                  className="data-table__colgroup">
+                                  className="data-table__tbody-colgroup">
                   <div className="scroll-box__viewport">
-                    <div className="data-table__table-container"
+                    <div className="data-table__tbody-container"
                          style={{...canonicColGroup.constraints, margin: `${topMargin}px 0 ${bottomMargin}px`}}>
-                      <table ref={ref => canonicRowGroup.tbodies[j] = ref}>
+                      <table ref={ref => canonicRowGroup.tbodies[j] = ref}
+                             className="data-table__tbody-table">
                         {renderColGroup(canonicColGroup.cols)}
                         {renderTbody(canonicColGroup.cols, renderedRows, effectiveOffset, createCellContent)}
                       </table>

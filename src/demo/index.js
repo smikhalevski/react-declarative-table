@@ -16,6 +16,7 @@ class App extends React.Component {
     return (
       <div style={{height: '100%'}}>
         <Table style={{height: '100%'}}
+               headless={false}
                colGroups={[
                  {
                    id: 'frozen',
