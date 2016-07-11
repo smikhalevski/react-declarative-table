@@ -294,10 +294,8 @@ export class Table extends React.Component {
            style={{...canonicLayout.style, ...style}}>
         {theadGroup}
         {canonicLayout.canonicRowGroups.map((canonicRowGroup, i) => {
-          const {className, totalCount} = canonicRowGroup;
-          if (totalCount == 0) {
-            return null; // Do not render empty row groups.
-          }
+          const {className} = canonicRowGroup;
+
           canonicRowGroup.tbodies = [];
           canonicRowGroup.scrollBoxes = [];
 
