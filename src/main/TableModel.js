@@ -83,11 +83,11 @@ export function canonizeLayout(model) {
 
     for (const stack of existingStacks) {
       const {column} = stack[stack.length - 1],
-            {targetColgroupId = DEFAULT_COL_GROUP_ID, width = 80} = column;
+            {targetColGroupId = DEFAULT_COL_GROUP_ID, width = 80} = column;
       if (column.hidden) {
         continue; // Ignore hidden columns.
       }
-      if (id === targetColgroupId) {
+      if (id === targetColGroupId) {
         let col = {stack, column, fixed: 0, fluid: 0, style: {}};
         if (column.sizing == Sizing.FLUID) {
           fluid += width;

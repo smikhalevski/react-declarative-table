@@ -48,7 +48,7 @@ class App extends React.Component {
                        column: {
                          key: 'index',
                          width: 100,
-                         targetColgroupId: 'frozen'
+                         targetColGroupId: 'frozen'
                        }
                      },
                      {
@@ -82,7 +82,7 @@ class App extends React.Component {
                      width: 100,
                      rowSpanPriority: 10,
                      rowSpanLimit: 5,
-                     targetColgroupId: 'frozen'
+                     targetColGroupId: 'frozen'
                    }
                  }
                ]}

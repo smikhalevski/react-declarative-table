@@ -15,7 +15,9 @@ export const TableColumnShape = shape({
 
   /**
    * Reference to `TableColGroupShape.id` of colgroup to which this column belongs.
+   *
    * If colgroup with given identifier is not defined then column is not rendered.
+   *
    * @default {@link DEFAULT_COL_GROUP_ID}
    */
   targetColGroupId: string,
@@ -47,25 +49,29 @@ export const TableColumnShape = shape({
   sizing: sizing,
 
   /**
-   * If sibling rows have same values for this column then this column is merged.
+   * If sibling rows have same values for this column then cells in this column are merged.
+   *
    * Negative value means column does not participate in row span.
+   *
    * @default -1
    */
   rowSpanPriority: number,
 
   /**
    * Number of rows that can be spanned if they contain same value for this column.
+   *
+   * @default Infinity
    */
   rowSpanLimit: number
 });
 
-let tableHeaderDescriptor = {
+const tableHeaderDescriptor = {
   /**
    * Optional header caption. By default, rendered as header content.
    */
   caption: string,
   column: TableColumnShape
-  // headers
+  // headers: arrayOf(TableHeaderShape)
 };
 
 export const TableHeaderShape = shape(tableHeaderDescriptor);
@@ -84,7 +90,7 @@ export const TableColGroupShape = shape({
    * - {@link Sizing.FIXED} Width of colgroup is always equal to sum of widths of contained columns. In this case
    * fluid columns contained by this colgroup are treated as fixed.
    *
-   * @default Sizing.FIXED
+   * @default {@link Sizing.FIXED}
    */
   sizing: sizing,
 
@@ -126,7 +132,7 @@ export const TableRowGroupShape = shape({
    * to other fluid row groups.
    * - {@link Sizing.FIXED} Height of row group is always equal to sum of heights of contained rows.
    *
-   * @default Sizing.FLUID
+   * @default {@link Sizing.FLUID}
    */
   sizing: sizing,
 

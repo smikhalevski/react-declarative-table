@@ -25,9 +25,6 @@
     position: relative;
     border-radius: inherit;
 
-    &:not(:last-child) > .@{scroll-box}__track--y {
-      visibility: hidden !important;
-    }
     + .@{data-table}__colgroup {
       border-left: none;
     }
@@ -40,7 +37,6 @@
       width: 100%;
       border-collapse: collapse;
 
-      > thead,
       > tbody {
         > tr {
           > th,
@@ -80,7 +76,7 @@
     border-bottom-right-radius: 0;
 
     > .@{data-table}__colgroup {
-      display: -ms-flex;
+      display: -ms-flexbox;
       display: flex;
       overflow: hidden;
       -ms-flex-direction: row;
@@ -95,6 +91,17 @@
       &:last-child:not(:first-child) {
         border-top-left-radius: 0;
       }
+      > .@{data-table}__table-container {
+        display: flex;
+
+        > table {
+          height: 100%;
+
+          > tbody > tr:last-child {
+            height: 100%;
+          }
+        }
+      }
     }
   }
   &__tbody {
@@ -105,10 +112,6 @@
     &:not(:last-child) {
       border-bottom-left-radius: 0;
       border-bottom-right-radius: 0;
-
-      > .@{data-table}__colgroup > .@{scroll-box}__track--x {
-        visibility: hidden !important;
-      }
     }
     > .@{data-table}__colgroup {
       &:not(:first-child):not(:last-child) {

@@ -1,17 +1,17 @@
 import React from 'react';
 import {findDOMNode} from 'react-dom';
-import {GenericScrollBox, ScrollAxes} from 'react-scroll-box';
+import {GenericScrollBox} from 'react-scroll-box';
 import {Sizing, TableDataSetShape, TableColGroupShape, TableRowGroupShape, TableHeaderShape} from './TableShape';
 import {canonizeLayout} from './TableModel';
 
 const {bool, number, func, oneOfType, string, arrayOf} = React.PropTypes;
 
-export function renderColgroup(cols) {
-  let colgroupContent = [];
+export function renderColGroup(cols) {
+  let colGroupContent = [];
   for (let col of cols) {
-    colgroupContent.push(<col key={colgroupContent.length} style={col.style}/>);
+    colGroupContent.push(<col key={colGroupContent.length} style={col.style}/>);
   }
-  return <colgroup>{colgroupContent}</colgroup>;
+  return <colgroup>{colGroupContent}</colgroup>;
 }
 
 export function equalityHeaderSpanPredicate(headerI, headerJ) {
@@ -69,7 +69,7 @@ export function renderThead(cols, createHeaderContent, headerSpanPredicate = equ
     theadContent.push(<tr key={depth} className="data-table__tr">{trContent}</tr>);
     colSpans = nestedColSpans;
   }
-  return <thead>{theadContent}</thead>;
+  return <tbody>{theadContent}</tbody>;
 }
 
 export function sortByRowSpanPriority({column: {rowSpanPriority: left}}, {column: {rowSpanPriority: right}}) {
@@ -278,7 +278,7 @@ export class Table extends React.Component {
               <div className="data-table__table-container"
                    style={canonicColGroup.constraints}>
                 <table>
-                  {renderColgroup(canonicColGroup.cols)}
+                  {renderColGroup(canonicColGroup.cols)}
                   {renderThead(canonicColGroup.cols, createHeaderContent)}
                 </table>
               </div>
@@ -334,15 +334,16 @@ export class Table extends React.Component {
                                   key={j}
                                   ref={ref => canonicRowGroup.scrollBoxes[j] = ref}
                                   onViewportScroll={targetScrollBox => this.onViewportScroll(targetScrollBox, i, j)}
-                                  axes={ScrollAxes.XY}
                                   disabled={disabled}
+                                  hideScrollBarX={i < canonicLayout.canonicRowGroups.length - 1}
+                                  hideScrollBarY={j < canonicLayout.canonicColGroups.length - 1}
                                   style={canonicColGroup.style}
                                   className="data-table__colgroup">
                   <div className="scroll-box__viewport">
                     <div className="data-table__table-container"
                          style={{...canonicColGroup.constraints, margin: `${topMargin}px 0 ${bottomMargin}px`}}>
                       <table ref={ref => canonicRowGroup.tbodies[j] = ref}>
-                        {renderColgroup(canonicColGroup.cols)}
+                        {renderColGroup(canonicColGroup.cols)}
                         {renderTbody(canonicColGroup.cols, renderedRows, effectiveOffset, createCellContent)}
                       </table>
                     </div>
