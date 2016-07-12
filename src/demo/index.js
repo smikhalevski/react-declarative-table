@@ -7,7 +7,7 @@ import {Table} from '../main/Table';
 import './index.less';
 
 let rows = [];
-for (let i = 0; i < 1000000; ++i) {
+for (let i = 0; i < 100000; ++i) {
   rows.push({index: i, bbb: 1, ccc: 2, ddd: 3, fff: 4, eee: 5});
 }
 

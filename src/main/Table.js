@@ -4,7 +4,7 @@ import {GenericScrollBox} from 'react-scroll-box';
 import {Sizing, TableDataSetShape, TableColGroupShape, TableRowGroupShape, TableHeaderShape} from './TableShape';
 import {canonizeLayout} from './TableModel';
 
-const {bool, number, func, oneOfType, string, arrayOf} = React.PropTypes;
+const {bool, number, func, arrayOf} = React.PropTypes;
 
 export function renderColGroup(cols) {
   let colGroupContent = [];
@@ -18,7 +18,7 @@ export function equalityHeaderSpanPredicate(headerI, headerJ) {
   return headerI == headerJ;
 }
 
-export function renderThead(cols, createHeaderContent, headerSpanPredicate = equalityHeaderSpanPredicate) {
+export function renderThead(cols, createHeaderContent, headerSpanPredicate) {
   let headerDepth = 0;
   for (let col of cols) {
     headerDepth = Math.max(headerDepth, col.stack.length);
@@ -72,7 +72,7 @@ export function renderThead(cols, createHeaderContent, headerSpanPredicate = equ
   return <tbody className="data-table__thead-body">{theadContent}</tbody>;
 }
 
-export function sortByRowSpanPriority({column: {rowSpanPriority: left}}, {column: {rowSpanPriority: right}}) {
+export function sortColByRowSpanPriority({column: {rowSpanPriority: left}}, {column: {rowSpanPriority: right}}) {
   if (typeof left != 'number') {
     return 1;
   }
@@ -82,8 +82,8 @@ export function sortByRowSpanPriority({column: {rowSpanPriority: left}}, {column
   return right - left;
 }
 
-export function renderTbody(cols, rows, offset, createCellContent) {
-  const sortedCols = cols.slice().sort(sortByRowSpanPriority),
+export function renderTbody(allCols, colsToRender, rows, offset, createCellContent) {
+  const sortedCols = allCols.slice().sort(sortColByRowSpanPriority),
         colContents = [];
   for (let k = 0; k < sortedCols.length; ++k) {
     const {key, rowSpanPriority, rowSpanLimit = rows.length} = sortedCols[k].column,
@@ -115,7 +115,7 @@ export function renderTbody(cols, rows, offset, createCellContent) {
   const tbodyContent = [];
   for (let i = 0; i < rows.length; ++i) {
     const trContent = [];
-    for (const col of cols) {
+    for (const col of colsToRender) {
       let k = sortedCols.indexOf(col);
       trContent.push(colContents[k][i]);
     }
@@ -129,7 +129,7 @@ export class Table extends React.Component {
   static defaultProps = {
     createHeaderContent: (header, stack, headerDepth, depth) => header.caption,
     createCellContent: (row, column, rowSpan) => row[column.key],
-    className: 'data-table--wrapped',
+    className: 'data-table--default data-table--wrapped',
     disabled: false,
     headless: false,
     estimatedRowHeight: 21,
@@ -139,7 +139,8 @@ export class Table extends React.Component {
     // `offscreenRowCount / 2` above viewport and `offscreenRowCount / 2` below viewport
     repaintZoneRowCount: 2,
     // Number of rows requested from server.
-    bufferRowCount: 1000
+    bufferRowCount: 1000,
+    headerSpanPredicate: equalityHeaderSpanPredicate
   };
 
   static propTypes = {
@@ -150,6 +151,7 @@ export class Table extends React.Component {
 
     createHeaderContent: func,
     createCellContent: func,
+    headerSpanPredicate: func,
 
     disabled: bool,
     headless: bool,
@@ -254,7 +256,8 @@ export class Table extends React.Component {
   };
 
   render() {
-    const {style, className, disabled, headless, estimatedRowHeight, createHeaderContent, createCellContent} = this.props;
+    console.log('------------')
+    const {style, className, disabled, headless, estimatedRowHeight, createHeaderContent, createCellContent, headerSpanPredicate} = this.props;
     let classNames = ['data-table'];
     if (className) {
       classNames = classNames.concat(className);
@@ -281,7 +284,7 @@ export class Table extends React.Component {
                    style={canonicColGroup.constraints}>
                 <table className="data-table__thead-table">
                   {renderColGroup(canonicColGroup.cols)}
-                  {renderThead(canonicColGroup.cols, createHeaderContent)}
+                  {renderThead(canonicColGroup.cols, createHeaderContent, headerSpanPredicate)}
                 </table>
               </div>
             </div>
@@ -345,7 +348,7 @@ export class Table extends React.Component {
                       <table ref={ref => canonicRowGroup.tbodies[j] = ref}
                              className="data-table__tbody-table">
                         {renderColGroup(canonicColGroup.cols)}
-                        {renderTbody(canonicColGroup.cols, renderedRows, effectiveOffset, createCellContent)}
+                        {renderTbody(canonicLayout.allCols, canonicColGroup.cols, renderedRows, effectiveOffset, createCellContent)}
                       </table>
                     </div>
                   </div>

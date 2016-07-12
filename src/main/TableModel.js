@@ -74,7 +74,8 @@ export function canonizeLayout(model) {
       canonicColGroups = [],
       existingStacks = flatten(headers.map(toStacks)),
       totalFluid = 0, // Table total fluid width.
-      totalFixed = 0;
+      totalFixed = 0,
+      allCols = [];
 
   for (const {id, sizing, className, scrollBox} of colGroups) {
     let cols = [], // Descriptors for <col> elements.
@@ -97,6 +98,7 @@ export function canonizeLayout(model) {
           col.fixed = width;
         }
         cols.push(col);
+        allCols.push(col);
       }
     }
     if (cols.length) {
@@ -144,5 +146,5 @@ export function canonizeLayout(model) {
       style.width = `${width}px`;
     }
   }
-  return {canonicRowGroups, canonicColGroups, style: {minWidth: `${tableMinWidth}px`}};
+  return {canonicRowGroups, canonicColGroups, allCols, style: {minWidth: `${tableMinWidth}px`}};
 }
