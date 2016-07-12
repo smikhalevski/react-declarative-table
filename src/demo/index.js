@@ -1,4 +1,5 @@
 import 'classlist-polyfill';
+import 'core-js/client/shim';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import {Table} from '../main/Table';
@@ -6,7 +7,7 @@ import {Table} from '../main/Table';
 import './index.less';
 
 let rows = [];
-for (let i = 0; i < 10000; ++i) {
+for (let i = 0; i < 1000000; ++i) {
   rows.push({index: i, bbb: 1, ccc: 2, ddd: 3, fff: 4, eee: 5});
 }
 
@@ -16,6 +17,13 @@ class App extends React.Component {
     return (
       <div style={{height: '100%'}}>
         <Table style={{height: '100%'}}
+               className="data-table--headless-
+                          data-table--collapsed-head-border-
+                          data-table--collapsed-colgroup-border-
+                          data-table--collapsed-rowgroup-border-
+                          data-table--default
+                          data-table--wrapped
+                          data-table--striped"
                headless={false}
                colGroups={[
                  {

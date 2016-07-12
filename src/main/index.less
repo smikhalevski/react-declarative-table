@@ -1,18 +1,82 @@
 @import (once) '~react-scroll-box/src/main/index.less';
 
-@data-table: data-table;
+@data-table-disable-border: none 0 !important;
+@data-table-border-radius:  6px;
+@data-table-border:         solid 1px #959595;
+@data-table-thead-bg:       #ddd;
+@data-table-stripe-accent:  fade(#000, 5%);
 
-.@{data-table} {
+.data-table {
   display: -ms-flexbox;
   display: flex;
   -ms-flex-direction: column;
   flex-direction: column;
 
+
+  // Modifiers
+  // ----------------------
+  &--default {
+    border-radius: @data-table-border-radius;
+
+    .data-table {
+      &__thead-colgroup {
+        background-color: @data-table-thead-bg;
+      }
+      &__th,
+      &__td,
+      &__thead-colgroup,
+      &__tbody-colgroup {
+        border: @data-table-border;
+      }
+    }
+  }
+  &--striped {
+    [data-parity="even"] .data-table__tbody-tr:nth-child(even),
+    [data-parity="odd"]  .data-table__tbody-tr:nth-child(odd) {
+      .data-table__td:not([rowspan]) {
+        background-color: @data-table-stripe-accent;
+      }
+    }
+  }
   &--wrapped {
-    > .@{data-table}__tbody > .@{data-table}__tbody-colgroup {
+    > .data-table__tbody > .data-table__tbody-colgroup {
       .scroll-box-wrap();
     }
   }
+  &--collapsed-colgroup-border {
+    > .data-table__thead > .data-table__thead-colgroup + .data-table__thead-colgroup,
+    > .data-table__tbody > .data-table__tbody-colgroup + .data-table__tbody-colgroup {
+      border-left: @data-table-disable-border;
+    }
+  }
+  &--collapsed-rowgroup-border {
+    > .data-table__tbody + .data-table__tbody > .data-table__tbody-colgroup {
+      border-top: @data-table-disable-border;
+    }
+  }
+  &--collapsed-head-border {
+    &:not(.data-table--headless) > .data-table__thead + .data-table__tbody > .data-table__tbody-colgroup {
+      border-top: @data-table-disable-border;
+    }
+  }
+
+  // This selector is needed if someone would like to add or remove `.data-table--headless`
+  // using `className`. If rendering `Table` with `headless={true}` this class name is added
+  // but thead markup is also removed from DOM.
+  &--headless {
+    > .data-table__thead {
+      display: none;
+
+      + .data-table__tbody {
+        border-top-left-radius: inherit;
+        border-top-right-radius: inherit;
+      }
+    }
+  }
+
+
+  // Generic
+  // ----------------------
   &__thead,
   &__tbody {
     display: -ms-flexbox;
@@ -26,10 +90,6 @@
     position: relative;
     border-radius: inherit;
   }
-  &__thead-colgroup + .@{data-table}__thead-colgroup,
-  &__tbody-colgroup + .@{data-table}__tbody-colgroup {
-    border-left: none;
-  }
   &__thead-container,
   &__tbody-container {
     // Otherwise scroll does not show up if table has no data but headers overflow table width.
@@ -41,31 +101,32 @@
     width: 100%;
     border-collapse: collapse;
   }
-  &__thead-tr:first-child > .@{data-table}__th,
-  &__tbody-tr:first-child > .@{data-table}__td {
-    border-top: none;
+  &__thead-tr:first-child > .data-table__th,
+  &__tbody-tr:first-child > .data-table__td {
+    border-top: @data-table-disable-border;
   }
-  &__thead-tr:last-child > .@{data-table}__th,
-  &__tbody-tr:last-child > .@{data-table}__td {
-    border-bottom: none;
+  &__thead-tr:last-child > .data-table__th,
+  &__tbody-tr:last-child > .data-table__td {
+    border-bottom: @data-table-disable-border;
   }
   &__th,
   &__td {
     overflow: hidden;
 
     &:first-child {
-      border-left: none;
+      border-left: @data-table-disable-border;
     }
     &:last-child {
-      border-right: none;
+      border-right: @data-table-disable-border;
     }
     &[rowspan] {
-      border-bottom: none;
+      border-bottom: @data-table-disable-border;
     }
   }
 
+
   // Thead
-  // ==============
+  // ----------------------
   &__thead {
     -ms-flex: 0 0 auto;
     flex: 0 0 auto;
@@ -90,15 +151,34 @@
     }
   }
   &__thead-container {
+    display: -ms-flexbox;
     display: flex;
   }
-  &__thead-table,
-  &__thead-tr:last-child {
+  &__thead-table {
+    -ms-flex: 1 0 auto;
+    flex: 1 0 auto;
     height: 100%;
+
+    > tbody {
+      height: 100%;
+    }
   }
 
+  &__thead-tr {
+    height: 1px;
+  }
+
+  &__thead-tr:last-child {
+    height: 100%;
+
+    > .data-table__th {
+      height: 100%;
+    }
+  }
+
+
   // Tbody
-  // ==============
+  // ----------------------
   &__tbody {
     -ms-flex: 1 1 auto;
     flex: 1 1 auto;
@@ -124,45 +204,6 @@
     &:last-child:not(:first-child) {
       border-top-left-radius: 0;
       border-bottom-left-radius: 0;
-    }
-  }
-  &:not(.@{data-table}--headless) {
-    > .@{data-table}__tbody {
-      border-top-left-radius: 0;
-      border-top-right-radius: 0;
-    }
-  }
-}
-
-
-@data-table-border-radius: 6px;
-@data-table-border: solid 1px #959595;
-
-.@{data-table} {
-  border-radius: @data-table-border-radius;
-
-  &__thead-colgroup {
-    background-color: #ddd;
-  }
-  &__th,
-  &__td,
-  &__thead-colgroup,
-  &__tbody-colgroup {
-    border: @data-table-border;
-  }
-
-  &__tbody-tr:nth-child(even) {
-    background-color: fade(#000, 5%);
-  }
-
-  &--striped[data-parity="even"] {
-    .@{data-table}__tbody-tr {
-      &:nth-child(odd) {
-        background-color: fade(#000, 5%);
-      }
-      &:nth-child(even) {
-        background-color: transparent;
-      }
     }
   }
 }

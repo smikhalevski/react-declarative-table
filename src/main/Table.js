@@ -103,7 +103,7 @@ export function renderTbody(cols, rows, offset, createCellContent) {
       }
       colContent[i] = (
         <td key={k}
-            rowSpan={rowSpan}
+            rowSpan={rowSpan == 1 ? null : rowSpan}
             className="data-table__td">
           {createCellContent(rows[i], sortedCols[k].column, rowSpan)}
         </td>
