@@ -20,7 +20,7 @@ module.exports = {
   ],
   module: {
     loaders: [
-      {test: /\.js$/, loader: 'babel'},
+      {test: /\.js$/, loader: 'babel', exclude: /node_modules/},
       {test: /\.less$/, loader: ExtractTextPlugin.extract('style', 'css!less?strictUnits=true&strictMath=true')},
       {test: /\.(png|jpg)$/, loader: 'file-loader?name=[name].[ext]'}
     ]
