@@ -12,7 +12,6 @@
   -ms-flex-direction: column;
   flex-direction: column;
 
-
   // Modifiers
   // ----------------------
   &--default {
@@ -74,7 +73,6 @@
     }
   }
 
-
   // Generic
   // ----------------------
   &__thead,
@@ -101,6 +99,10 @@
     width: 100%;
     border-collapse: collapse;
   }
+  &__thead-body,
+  &__tbody-body {
+    height: 100%;
+  }
   &__thead-tr:first-child > .data-table__th,
   &__tbody-tr:first-child > .data-table__td {
     border-top: @data-table-disable-border;
@@ -123,7 +125,6 @@
       border-bottom: @data-table-disable-border;
     }
   }
-
 
   // Thead
   // ----------------------
@@ -158,24 +159,10 @@
     -ms-flex: 1 0 auto;
     flex: 1 0 auto;
     height: 100%;
-
-    > tbody {
-      height: 100%;
-    }
   }
-
-  &__thead-tr {
-    height: 1px;
-  }
-
-  &__thead-tr:last-child {
+  &__th {
     height: 100%;
-
-    > .data-table__th {
-      height: 100%;
-    }
   }
-
 
   // Tbody
   // ----------------------

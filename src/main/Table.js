@@ -69,7 +69,7 @@ export function renderThead(cols, createHeaderContent, headerSpanPredicate = equ
     theadContent.push(<tr key={depth} className="data-table__thead-tr">{trContent}</tr>);
     colSpans = nestedColSpans;
   }
-  return <tbody>{theadContent}</tbody>;
+  return <tbody className="data-table__thead-body">{theadContent}</tbody>;
 }
 
 export function sortByRowSpanPriority({column: {rowSpanPriority: left}}, {column: {rowSpanPriority: right}}) {
@@ -121,7 +121,7 @@ export function renderTbody(cols, rows, offset, createCellContent) {
     }
     tbodyContent.push(<tr key={offset + i} className="data-table__tbody-tr">{trContent}</tr>);
   }
-  return <tbody>{tbodyContent}</tbody>;
+  return <tbody className="data-table__tbody-body">{tbodyContent}</tbody>;
 }
 
 export class Table extends React.Component {
