@@ -105,7 +105,9 @@ export function canonizeLayout(model) {
       for (const col of cols) {
         if (col.fluid) {
           let ratio = col.fluid / fluid;
-          col.style.width = `calc(${ratio * 100}% - ${Math.round(fixed * ratio)}px)`;
+          // Required size can be set by `calc(${ratio * 100}% - ${fixed * ratio}px)`
+          // but `calc` is not supported in `colgroup` styles in Safari.
+          col.style.width = `${ratio * 100}%`;
         } else {
           col.style.width = `${col.fixed}px`;
         }

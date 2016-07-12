@@ -88,20 +88,11 @@
     position: relative;
     border-radius: inherit;
   }
-  &__thead-container,
-  &__tbody-container {
-    // Otherwise scroll does not show up if table has no data but headers overflow table width.
-    min-height: 1px;
-  }
   &__thead-table,
   &__tbody-table {
     table-layout: fixed;
     width: 100%;
     border-collapse: collapse;
-  }
-  &__thead-body,
-  &__tbody-body {
-    height: 100%;
   }
   &__thead-tr:first-child > .data-table__th,
   &__tbody-tr:first-child > .data-table__td {
@@ -151,18 +142,6 @@
       border-top-left-radius: 0;
     }
   }
-  &__thead-container {
-    display: -ms-flexbox;
-    display: flex;
-  }
-  &__thead-table {
-    -ms-flex: 1 0 auto;
-    flex: 1 0 auto;
-    height: 100%;
-  }
-  &__th {
-    height: 100%;
-  }
 
   // Tbody
   // ----------------------
@@ -192,5 +171,9 @@
       border-top-left-radius: 0;
       border-bottom-left-radius: 0;
     }
+  }
+  &__tbody-container {
+    // Otherwise scroll does not show up if table has no data but headers overflow table width.
+    min-height: 1px;
   }
 }
