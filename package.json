@@ -1,6 +1,6 @@
 {
   "name": "react-declarative-table",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "author": "Savva Mikhalevski",
   "description": "Highly performant and customizable table component with no external dependencies but React 0.13+",
   "license": "MIT",
