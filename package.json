@@ -10,7 +10,6 @@
   },
   "homepage": "https://github.com/smikhalevski/react-declarative-table",
   "main": "target/out/index.js",
-  "webpack": "src/main/index.js",
   "files": [
     "src/main/",
     "target/out/",
@@ -60,7 +59,6 @@
     "jasmine": "",
     "jasmine-node": "1.14.5",
     "glob": "",
-
     "react-scroll-box": ""
   },
   "dependencies": {
